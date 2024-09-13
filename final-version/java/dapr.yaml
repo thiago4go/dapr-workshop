@@ -1,6 +1,6 @@
 version: 1
 common:
-  resourcesPath: ./local/
+  resourcesPath: ../../local/
 apps:
   - appID: pizza-store
     appDirPath: ./pizza-store/target
