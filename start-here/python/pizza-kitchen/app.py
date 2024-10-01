@@ -25,7 +25,7 @@ def start(order_data):
     return prep_time
 
 def ready(order_data):
-    order_data['event'] = 'Ready'
+    order_data['event'] = 'Ready for delivery'
 
     # Send ready event to pubsub 
     publish_event(order_data)
@@ -43,7 +43,7 @@ def publish_event(order_data):
             data=json.dumps(order_data),
             data_content_type='application/json',
         )
-        logging.info('Published order to pubsub: %s', json.dumps(order_data))
+        #logging.info('Published order to pubsub: %s', json.dumps(order_data))
 
 
 app = Flask(__name__)
@@ -52,12 +52,12 @@ app = Flask(__name__)
 @app.route('/cook', methods=['POST'])
 def startCooking():
     order_data = request.json
-    print('Cooking order: %s', order_data['order_id'])
+    logging.info('Cooking order: %s', order_data['order_id'])
 
     wait = start(order_data)
     time.sleep(wait)
 
-    print('Cooking done')
+    print('Cooking done: %s', order_data['order_id'])
     ready(order_data)
 
     return json.dumps({'success': True}), 200, {

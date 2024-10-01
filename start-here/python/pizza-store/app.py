@@ -25,11 +25,11 @@ def save_order(order_id, order_data):
 
         # Save state into the state store
         client.save_state(DAPR_STORE_NAME, order_id, str(order_data))
-        print('Saving Order %s with event %s', order_id, order_data['event'])
+        logging.info('Saving Order %s with event %s', order_id, order_data['event'])
 
         # Get state from the state store
-        result = client.get_state(DAPR_STORE_NAME, order_id)
-        print('Result after get: ' + str(result.data))
+        # result = client.get_state(DAPR_STORE_NAME, order_id)
+        # print('Result after get: ' + str(result.data))
 
         return order_id
 
@@ -41,12 +41,31 @@ def start_cook(order_data):
     # Adding app id as part of the header
     headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
 
-    url = '%s/orders' % (base_url)
+    url = '%s/cook' % (base_url)
     print('url: ' + url, flush=True)
 
     # Invoking a service
     result = requests.post(
-        url='%s/cook' % (base_url),
+        url=url,
+        data=json.dumps(order_data),
+        headers=headers
+    )
+    print('result: ' + str(result), flush=True)
+
+    time.sleep(1)
+
+def start_delivery(order_data):
+    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
+                    'DAPR_HTTP_PORT', '3500')
+    # Adding app id as part of the header
+    headers = {'dapr-app-id': 'pizza-delivery', 'content-type': 'application/json'}
+
+    url = '%s/deliver' % (base_url)
+    print('url: ' + url, flush=True)
+
+    # Invoking a service
+    result = requests.post(
+        url=url,
         data=json.dumps(order_data),
         headers=headers
     )
@@ -60,9 +79,16 @@ def start_cook(order_data):
 @app.route('/events', methods=['POST'])
 def orders_subscriber():
     event = from_http(request.headers, request.get_data())
-    print('Subscriber received : %s' % event.data['order_id'], flush=True)
+    order_id = event.data['order_id']
+    event_type = event.data['event']
+
+    logging.info('%s - %s', order_id, event_type)
 
     save_order(event.data['order_id'], event.data)
+
+    # check if the event is ready for delivery
+    if event_type == 'Ready for delivery':
+        start_delivery(event.data)
 
     return json.dumps({'success': True}), 200, {
         'ContentType': 'application/json'}
