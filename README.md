@@ -2,16 +2,14 @@
 
 ## Overview & Goals
 
-Microservices can be hard. But, while being exceedingly difficult to architect they have become an increasingly popular architecture pattern. As developers begin to migrate from existing monolithic code bases to a microservices system, they spend much of their time dealing with the inherent challenges presented by distributed applications, such as state management and service invocation.
+Welcome to Diagrid's [Dapr](https://dapr.io/) Workshop! Our goal is for you to familiarize with Dapr's most popular APIs and give you a starting point so you can start building your own distributed applications right away!
 
-Enter [Dapr](https://dapr.io/) - A **D**istributed **Ap**plication **R**untime built with developers in mind. Dapr helps out with some of these problems by providing consistent building blocks in the form of http/gRPC APIs that can be called natively or using one of the language SDKs.
-
-The Cloud Native Global Black Belt (GBB) Team has created this workshop with the hopes of illustrating how microservice development can be made easier with Dapr!
+Microservices are popular for multiple reasons. They can be written in any programming language and can be small enough to perform simple and easy to execute tasks. Because of that, your solution can end up with hundreds of them, all over the place. And this where all the problems begin. Security, observability, resiliency become challenges that are no easy to overcome, and that's where Dapr comes in.
 
 \
-This workshop **is**:
+At the end of this workshop **you will**:
 
-* An introduction to Dapr and how it enables developers to build resilient, event-driven, stateful and stateless applications
+* Understand what Dapr is end how it can expedite your 
 
 * A series of hands-on challenges that allow participants to implement solutions to the problems commonly faced in microservice development
 
@@ -68,3 +66,8 @@ The diagram below is a depiction of the workshop journey and an overview of the 
 
 In order to partake in the workshop, you will be required to install the following [technical prerequisites](./prerequisites.md). In order to understand more about the customer backstory, check out the [customer story](customer-story.md)...
 
+
+
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt

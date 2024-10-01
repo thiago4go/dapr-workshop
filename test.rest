@@ -1,10 +1,29 @@
 ### Place orders
-@pizza-store = localhost:8080
+@pizza-store = localhost:8001
 @pizza-store-k8s = 34.82.176.152
 
+@pizza-kitchen = localhost:8002
+
 ### Place a new order
-POST http://{{pizza-store-k8s}}/order 
-content-type: application/cloudevents+json
+POST http://{{pizza-store}}/orders 
+content-type: application/json
+
+{
+    "customer": {
+      "name": "alice",
+      "email": "alice@email.com"
+    },
+    "items": [
+      {
+      "type":"vegetarian",
+      "amount": 2
+      }
+    ]
+}
+
+### Start cooking
+POST http://{{pizza-kitchen}}/orders 
+content-type: application/json
 
 {
     "customer": {

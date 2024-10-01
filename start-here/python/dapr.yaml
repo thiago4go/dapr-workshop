@@ -1,0 +1,13 @@
+version: 1
+common:
+  resourcesPath: ../../local/
+apps:
+  - appDirPath: ./pizza-store/
+    appID: pizza-store
+    appPort: 8001
+    command: ["python3", "app.py"]
+  - appDirPath: ./pizza-kitchen/
+    appID: pizza-kitchen
+    appPort: 8002
+    daprHTTPPort: 3502
+    command: ["python3", "app.py"]
