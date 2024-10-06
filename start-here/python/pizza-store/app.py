@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from cloudevents.http import from_http
 from dapr.clients import DaprClient
 
@@ -18,6 +19,7 @@ DAPR_PORT = 8001
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+CORS(app)
 
 def save_order(order_id, order_data):
 
@@ -90,8 +92,10 @@ def orders_subscriber():
     if event_type == 'Ready for delivery':
         start_delivery(event.data)
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('ContentType', 'application/json')
+    return response
 
 
 # ------------------- Application routes ------------------- #
