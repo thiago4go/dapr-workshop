@@ -66,7 +66,7 @@ The diagram below is a depiction of the workshop journey and an overview of the 
 
 - [Docker](https://docs.docker.com/engine/install/)
 - Dapr 1.13.5 or higher (runtime and CLI)
-- Python 3.20
+- [Python 3](https://www.python.org/downloads/)
 
 ### Install Dapr
 
