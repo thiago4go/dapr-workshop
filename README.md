@@ -64,10 +64,33 @@ The diagram below is a depiction of the workshop journey and an overview of the 
 
 ## Prerequisites
 
+- [Docker](https://docs.docker.com/engine/install/)
+- Dapr 1.13.5 or higher (runtime and CLI)
+- Python 3.20
+
+### Install Dapr
+
+1 - Follow [these steps](https://docs.dapr.io/getting-started/install-dapr-cli/) to install the Dapr CLI.
+2 - [Initialize Dapr](https://docs.dapr.io/getting-started/install-dapr-cli/):
+
+```bash
+dapr init
+```
+
+3 - Verify is local containers are running:
+
+```bash
+docker ps
+```
+
+![containers](imgs/docker-ps.png)
+
+
 In order to partake in the workshop, you will be required to install the following [technical prerequisites](./prerequisites.md). In order to understand more about the customer backstory, check out the [customer story](customer-story.md)...
-
-
 
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
+
+
+
