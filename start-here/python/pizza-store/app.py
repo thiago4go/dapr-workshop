@@ -29,11 +29,16 @@ def save_order(order_id, order_data):
         client.save_state(DAPR_STORE_NAME, order_id, str(order_data))
         logging.info('Saving Order %s with event %s', order_id, order_data['event'])
 
-        # Get state from the state store
-        # result = client.get_state(DAPR_STORE_NAME, order_id)
-        # print('Result after get: ' + str(result.data))
-
         return order_id
+    
+def get_order(order_id):
+
+    with DaprClient() as client:
+
+        # Get state into the state store
+        result = client.get_state(DAPR_STORE_NAME, order_id)
+
+        return result.data
 
 # ------------------- Dapr service invocation ------------------- #
 
@@ -116,7 +121,19 @@ def createOrder():
     # Send order to kitchen
     start_cook(order_data)
 
-    return json.dumps({'success': True}), 200, {
+    return json.dumps({'orderId': order_id}), 200, {
+        'ContentType': 'application/json'}
+
+@app.route('/orders/<order_id>', methods=['GET'])
+def getOrder(order_id):
+    if order_id:
+        result = get_order(order_id)   
+        result_str = result.decode('utf-8')     
+
+        return json.dumps(result_str), 200, {
+        'ContentType': 'application/json'}
+    
+    return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
         'ContentType': 'application/json'}
 
 

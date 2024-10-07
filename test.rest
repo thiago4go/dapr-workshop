@@ -21,6 +21,11 @@ content-type: application/json
     ]
 }
 
+###Get order
+GET http://{{pizza-store}}/orders/27dde167-9f86-4a88-80fc-22ae27c82730
+content-type: application/json
+
+
 ### Start cooking
 POST http://{{pizza-kitchen}}/orders 
 content-type: application/json

@@ -1,46 +1,38 @@
-const stompClient = new StompJs.Client({
-});
+// Dapr configuration
+const DAPR_HTTP_PORT = 3506; // Default Dapr HTTP port
+const PUBSUB_NAME = 'pizzapubsub';
+const TOPIC_NAME = 'order';
+
+var currentEvent = "";
+var currentOrder = "";
 
 function connect() {
-    console.log("Fetching Server Info")
-    fetch("/server-info", {
-        method: "GET",
-        headers: {
-            "Content-type": "application/json; charset=UTF-8"
-        }
-    }).then((response) => {
-        console.log("Fetching Response")
-        return response.json();
-    }).then((response) => {
-        var publicURL = 'ws://localhost:8080/ws';
-        stompClient.brokerURL = publicURL;
-        console.log(publicURL);
-        console.log("Activating client")
-        stompClient.activate();
-    }).catch((error) => {
-        console.error(`Could not get server-info: ${error}`);
-    });
-
-};
-
-stompClient.onConnect = (frame) => {
+    console.log("Connected to Dapr sidecar");
     setConnected(true);
-    console.log('Connected: ' + frame);
-    stompClient.subscribe('/topic/order', (event) => {
-        console.log(JSON.parse(event.body));
-        showEvent(event.body);
+    //subscribeToEvents();
+}
 
-    });
-};
+function subscribeToEvents() {
+    // In a real application, you would set up server-sent events or long-polling here
+    // For simplicity, we'll just poll for new events every 5 seconds
+    setInterval(fetchEvents, 1000);
+}
 
-stompClient.onWebSocketError = (error) => {
-    console.error('Error with websocket', error);
-};
-
-stompClient.onStompError = (frame) => {
-    console.error('Broker reported error: ' + frame.headers['message']);
-    console.error('Additional details: ' + frame.body);
-};
+function fetchEvents() {
+    if (currentOrder != ""){
+        if (currentEvent != "Delivered") {
+            fetch("http://127.0.0.1:8001/orders/" + currentOrder, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(event => {
+                event = event.replace(/'/g, '"')
+                showEvent(event);
+            })
+            .catch(error => console.error('Error fetching events:', error));
+        }
+    } 
+}
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -54,104 +46,44 @@ function setConnected(connected) {
     $("#events").html("");
 }
 
-
-function placeOrderFake() {
-    var fakeEvent = {
-        "type": "order-placed",
-        "service": "store",
-        "order": {
-            "id": "123-123-123-123-123-123"
-        },
-        "message": "Order has been placed."
-    }
-    showEvent(JSON.stringify(fakeEvent));
-}
-
-function kitchenAcceptFake() {
-    var fakeEvent = {
-        "type": "order-in-preparation",
-        "service": "kitchen",
-        "order": {
-            "id": "123-123-123-123-123-123"
-        },
-        "message": "Your Order has been accepted by the kitchen."
-    }
-    showEvent(JSON.stringify(fakeEvent));
-}
-
-function deliveryFake() {
-    var fakeEvent = {
-        "type": "order-out-for-delivery",
-        "service": "kitchen",
-        "order": {
-            "id": "123-123-123-123-123-123"
-        },
-        "message": "Your Order is out for delivery."
-    }
-    showEvent(JSON.stringify(fakeEvent));
-}
-
-function deliveryUpdateFake() {
-    var fakeEvent = {
-        "type": "order-on-its-way",
-        "service": "delivery",
-        "order": {
-            "id": "123-123-123-123-123-123"
-        },
-        "message": "Your Order 1 mile away"
-    }
-    showEvent(JSON.stringify(fakeEvent));
-    var fakeEvent = {
-        "type": "delivery",
-        "service": "kitchen",
-        "order": {
-            "id": "123-123-123-123-123-123"
-        },
-        "message": "Your Order half mile away"
-    }
-    showEvent(JSON.stringify(fakeEvent));
-}
-
-function completedFake() {
-    var fakeEvent = {
-        "type": "order-completed",
-        "service": "store",
-        "order": {
-            "id": "123-123-123-123-123-123"
-        },
-        "message": "Your has been delivered."
-    }
-    showEvent(JSON.stringify(fakeEvent));
-
-}
-
 function placeOrder() {
+    currentEvent = "";
+    currentOrder = "";
+
     console.log("Placing Order");
 
-    //Send Order to store
-    fetch("http://127.0.0.1:8001/orders", {
-        method: "POST",
-        body: JSON.stringify({
-            customer: {
-                name: "salaboy",
-                email: "salaboy@mail.com",
-            },
-            items: [
-                {
-                    "type": "pepperoni",
-                    "amount": 1,
-                }
-            ]
-        }),
-        headers: {
-            "Content-type": "application/json; charset=UTF-8"
-        }
-    });
+    const order = {
+        customer: {
+            name: "salaboy",
+            email: "salaboy@mail.com",
+        },
+        items: [
+            {
+                "type": "pepperoni",
+                "amount": 1,
+            }
+        ]
+    };
 
+    console.log("Order placed successfully");
+
+    fetch("http://127.0.0.1:8001/orders", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+    })
+    .then(response => response.json())
+    .then(response => {
+        console.log("jsonObj: ", response.orderId);
+        currentOrder = response.orderId;
+        subscribeToEvents();
+    })
+    .catch(error => console.error('Error:', error));
 }
 
 function disconnect() {
-    stompClient.deactivate();
     setConnected(false);
     console.log("Disconnected");
 }
@@ -173,50 +105,49 @@ function createItem(detailsImage, text, disabled) {
     return item;
 }
 
-function createEventEntry(eventObject) {
+function createEventEntry(event) {
+
     var eventEntry = "<div>" +
-        "<p>Event from Service: <strong>" + eventObject.service + "</strong></p>" +
-        "<p>Event Type: <strong>" + eventObject.type + "</strong></p>" +
-        "<p>Message: <strong>" + eventObject.message + "</strong></p>" +
-        "<p>Event Order Id: <strong>" + eventObject.order.id + "</strong></p>" +
+        "<p>Pizza for <strong>" + event.customer.name + "</strong></p>" +
+        "<p>Event Type: <strong>" + event.event + "</strong></p>" +
+        "<p>Pizza: <strong>" + event.items[0].type + "</strong></p>" +
         "</div>";
     return eventEntry;
 
 }
 
 function showEvent(event) {
+    var eventObj = JSON.parse(event);
+    if (currentEvent === eventObj.event) {
+        return;
+    }
 
-    eventObject = JSON.parse(event);
-    console.log("Event Type => " + eventObject.type);
+    $("#events").append(createEventEntry(eventObj));
+    
+    currentEvent = eventObj.event;
 
-    $("#events").append(createEventEntry(eventObject));
-
-
-    if (eventObject.type === "order-placed") {
+    if (eventObj.event === "Sent to kitchen") {
         $("#status").append(createItem("Order.png", "Order Placed", false));
     }
-    if (eventObject.type === "order-in-preparation") {
+    if (eventObj.event === "Cooking") {
         $("#status").append(createItem("PizzaInOven.png", "Your Order is being prepared.", false));
     }
-    if (eventObject.type === "order-out-for-delivery") {
+    if (eventObj.event === "Ready for delivery" 
+        || eventObj.event === "Order picked up by driver" 
+        || eventObj.event === "Delivery started" 
+        || eventObj.event === "En-route" 
+        || eventObj.event === "Nearby") {
 
-        $("#status").append(createItem("Map.gif", "Your order is out for delivery.", false));
+        $("#status").append(createItem("Map.gif", eventObj.event, false));
     }
-    if (eventObject.type === "order-completed") {
-
+    if (eventObj.event === "Delivered") {
         $("#status").append(createItem("BoxAndDrink.png", "Your order is now complete. Thanks for choosing us!", false));
-
     }
 
 }
-
 $(function () {
     $("form").on('submit', (e) => e.preventDefault());
-    $("#placeOrder").click(() => placeOrder());
-    $("#placeOrderFake").click(() => placeOrderFake());
-    $("#kitchenAcceptFake").click(() => kitchenAcceptFake());
-    $("#deliveryFake").click(() => deliveryFake());
-    $("#deliveryUpdateFake").click(() => deliveryUpdateFake());
-    $("#completedFake").click(() => completedFake());
+    $("#connect").click(() => connect());
     $("#disconnect").click(() => disconnect());
+    $("#placeOrder").click(() => placeOrder());
 });
