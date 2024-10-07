@@ -23,3 +23,8 @@ docker ps
 
 ![containers](imgs/docker-ps.png)
 
+## Let's get to coding
+
+Pivk your programming language:
+
+- [Python](./python.md)
