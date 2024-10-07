@@ -8,15 +8,15 @@ Microservices are popular for multiple reasons. They can be written in any progr
 
 ## Path
 
-1. State Store
+### State Store
 
 We will start the workshop by creating a new order and saving it to Redis, using the State Store API. You will learn how to create a component definiton fine, and how to use the Dapr SDK to save and to retrieve an item from Redis.
 
-2. Service Invocation
+### Service Invocation
 
 Now that you learned the basics, let's jump to another popular API: Service Invocation. After the order is saved, we will create another service that is responsible for cooking the pizza for us.
 
-3. Pub/Sub
+### Pub/Sub
 
 Then, we will learn how to leverage Dapr's Pub/Sub API to publish events to Redis from ordering the pizza, to cookign and delivering it. We will also subscribe to these events and updating them in the UI.
 
