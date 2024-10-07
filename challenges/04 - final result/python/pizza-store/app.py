@@ -36,6 +36,14 @@ def get_order(order_id):
         result = client.get_state(DAPR_STORE_NAME, order_id)
 
         return result.data
+    
+def delete_order(order_id):
+    with DaprClient() as client:
+        # Delete state
+        client.delete_state(DAPR_STORE_NAME, order_id)
+        logging.info('Order deleted - %s', order_id)
+
+        return order_id
 
 # ------------------- Dapr Service Invocation ------------------- #
 
@@ -102,6 +110,7 @@ def orders_subscriber():
 
 # ------------------- Application routes ------------------- #
 
+# Create a new order
 @app.route('/orders', methods=['POST'])
 def createOrder():
 
@@ -127,6 +136,7 @@ def createOrder():
     return json.dumps({'orderId': order_id}), 200, {
         'ContentType': 'application/json'}
 
+# Get order by id
 @app.route('/orders/<order_id>', methods=['GET'])
 def getOrder(order_id):
     if order_id:
@@ -139,5 +149,16 @@ def getOrder(order_id):
     return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
         'ContentType': 'application/json'}
 
+# Delete order by id
+@app.route('/orders/<order_id>', methods=['DELETE'])
+def deleteOrder(order_id):
+    if order_id:
+        delete_order(order_id)   
+
+        return json.dumps({'orderId': order_id}), 200, {
+        'ContentType': 'application/json'}
+    
+    return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
+        'ContentType': 'application/json'}
 
 app.run(port=8001)
