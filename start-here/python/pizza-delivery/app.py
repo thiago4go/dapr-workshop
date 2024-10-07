@@ -16,11 +16,11 @@ logging.basicConfig(level=logging.INFO)
 
 def deliver(order_data):
     # Simulate delivery time and events
-    time.sleep(1)
+    time.sleep(3)
     order_data['event'] = 'Delivery started'
     publish_event(order_data)
 
-    time.sleep(2)
+    time.sleep(3)
     order_data['event'] = 'Order picked up by driver'
     publish_event(order_data)
 

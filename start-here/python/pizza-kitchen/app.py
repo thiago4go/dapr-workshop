@@ -9,18 +9,20 @@ DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 DAPR_PORT = 8002
 
-logging.basicConfig(level=logging.INFO)
-
+# logging.basicConfig(level=logging.INFO)
 
 def start(order_data):
-    # Generate a random prep time between 5 and 15 seconds
-    prep_time = random.randint(5, 15)
+    # Generate a random prep time between 4 and 7 seconds
+    prep_time = random.randint(4, 7)
+    
     order_data['prep_time'] = prep_time
-
     order_data['event'] = 'Cooking'
+
+    time.sleep(prep_time)
 
     # Send cooking event to pubsub 
     publish_event(order_data)
+    
 
     return prep_time
 
@@ -45,7 +47,6 @@ def publish_event(order_data):
         )
         #logging.info('Published order to pubsub: %s', json.dumps(order_data))
 
-
 app = Flask(__name__)
 
 # ------------------- Application routes ------------------- #
@@ -54,10 +55,9 @@ def startCooking():
     order_data = request.json
     logging.info('Cooking order: %s', order_data['order_id'])
 
-    wait = start(order_data)
-    time.sleep(wait)
-
-    print('Cooking done: %s', order_data['order_id'])
+    start(order_data)
+    
+    logging.info('Cooking done: %s', order_data['order_id'])
     ready(order_data)
 
     return json.dumps({'success': True}), 200, {

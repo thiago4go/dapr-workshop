@@ -22,9 +22,7 @@ app = Flask(__name__)
 CORS(app)
 
 def save_order(order_id, order_data):
-
     with DaprClient() as client:
-
         # Save state into the state store
         client.save_state(DAPR_STORE_NAME, order_id, str(order_data))
         logging.info('Saving Order %s with event %s', order_id, order_data['event'])
@@ -32,9 +30,7 @@ def save_order(order_id, order_data):
         return order_id
     
 def get_order(order_id):
-
     with DaprClient() as client:
-
         # Get state into the state store
         result = client.get_state(DAPR_STORE_NAME, order_id)
 
@@ -92,6 +88,10 @@ def orders_subscriber():
     logging.info('%s - %s', order_id, event_type)
 
     save_order(event.data['order_id'], event.data)
+    
+    if event_type == 'Sent to kitchen':
+        # Send order to kitchen
+        start_cook(event.data)
 
     # check if the event is ready for delivery
     if event_type == 'Ready for delivery':
@@ -101,7 +101,6 @@ def orders_subscriber():
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('ContentType', 'application/json')
     return response
-
 
 # ------------------- Application routes ------------------- #
 
@@ -116,10 +115,16 @@ def createOrder():
     order_data['event'] = 'Sent to kitchen'
 
     # Save order to state store
-    save_order(order_id, order_data)
+    # save_order(order_id, order_data)
 
-    # Send order to kitchen
-    start_cook(order_data)
+    # Publish an event/message using Dapr PubSub
+    with DaprClient() as client:
+        result = client.publish_event(
+            pubsub_name=DAPR_PUBSUB_NAME,
+            topic_name=DAPR_PUBSUB_TOPIC_NAME,
+            data=json.dumps(order_data),
+            data_content_type='application/json',
+        )
 
     return json.dumps({'orderId': order_id}), 200, {
         'ContentType': 'application/json'}

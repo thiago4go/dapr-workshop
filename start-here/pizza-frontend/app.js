@@ -47,6 +47,9 @@ function setConnected(connected) {
 }
 
 function placeOrder() {
+    $("#events").empty();
+    $("#status").empty();
+
     currentEvent = "";
     currentOrder = "";
 
@@ -54,15 +57,18 @@ function placeOrder() {
 
     const order = {
         customer: {
-            name: "salaboy",
-            email: "salaboy@mail.com",
+            name: $("#customerName").val(),
+            email: $("#customerEmail").val(),
         },
         items: [
             {
-                "type": "pepperoni",
+                "type": $("#pizzaType").val(),
                 "amount": 1,
             }
-        ]
+        ],
+        address: $("#address").val(),
+        creditCard: $("#creditCard").val(),
+        drink: $("#drink").val()
     };
 
     console.log("Order placed successfully");
@@ -126,15 +132,21 @@ function showEvent(event) {
     
     currentEvent = eventObj.event;
 
+    $("#status").empty();
+
     if (eventObj.event === "Sent to kitchen") {
         $("#status").append(createItem("Order.png", "Order Placed", false));
     }
     if (eventObj.event === "Cooking") {
         $("#status").append(createItem("PizzaInOven.png", "Your Order is being prepared.", false));
     }
+    
     if (eventObj.event === "Ready for delivery" 
-        || eventObj.event === "Order picked up by driver" 
-        || eventObj.event === "Delivery started" 
+        || eventObj.event === "Order picked up by driver" ) {
+        $("#status").append(createItem("Delivery.png", eventObj.event, false));
+    }
+
+    if (eventObj.event === "Delivery started" 
         || eventObj.event === "En-route" 
         || eventObj.event === "Nearby") {
 
