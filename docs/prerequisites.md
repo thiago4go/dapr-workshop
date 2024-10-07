@@ -21,7 +21,7 @@ dapr init
 docker ps
 ```
 
-![containers](imgs/docker-ps.png)
+![containers](./../imgs/docker-ps.png)
 
 ## Let's get to coding
 
