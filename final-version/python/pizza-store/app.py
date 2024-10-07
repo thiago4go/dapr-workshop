@@ -10,6 +10,7 @@ import logging
 import json
 import requests
 
+
 DAPR_STORE_NAME = 'pizzastatestore'
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
@@ -19,8 +20,6 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
-
-# ------------------- Dapr State Store ------------------- #
 
 def save_order(order_id, order_data):
     with DaprClient() as client:
@@ -37,7 +36,7 @@ def get_order(order_id):
 
         return result.data
 
-# ------------------- Dapr Service Invocation ------------------- #
+# ------------------- Dapr service invocation ------------------- #
 
 def start_cook(order_data):
     base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
@@ -56,9 +55,11 @@ def start_cook(order_data):
     )
     print('result: ' + str(result), flush=True)
 
-def start_delivery(order_data):
-    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3500')
+    time.sleep(1)
 
+def start_delivery(order_data):
+    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
+                    'DAPR_HTTP_PORT', '3500')
     # Adding app id as part of the header
     headers = {'dapr-app-id': 'pizza-delivery', 'content-type': 'application/json'}
 
@@ -75,7 +76,7 @@ def start_delivery(order_data):
 
     time.sleep(1)
 
-# ------------------- Dapr Pub/Sub ------------------- #
+# ------------------- Dapr pub/sub ------------------- #
 
 # Dapr subscription in /dapr/subscribe sets up this route
 @app.route('/events', methods=['POST'])
@@ -87,18 +88,19 @@ def orders_subscriber():
     logging.info('%s - %s', order_id, event_type)
 
     save_order(event.data['order_id'], event.data)
-
+    
     if event_type == 'Sent to kitchen':
         # Send order to kitchen
-        time.sleep(4)
         start_cook(event.data)
 
     # check if the event is ready for delivery
     if event_type == 'Ready for delivery':
         start_delivery(event.data)
 
-    return json.dumps({'success': "True"}), 200, {
-        'ContentType': 'application/json'}
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('ContentType', 'application/json')
+    return response
 
 # ------------------- Application routes ------------------- #
 
@@ -117,7 +119,7 @@ def createOrder():
 
     # Publish an event/message using Dapr PubSub
     with DaprClient() as client:
-        client.publish_event(
+        result = client.publish_event(
             pubsub_name=DAPR_PUBSUB_NAME,
             topic_name=DAPR_PUBSUB_TOPIC_NAME,
             data=json.dumps(order_data),

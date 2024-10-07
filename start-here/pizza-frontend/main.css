@@ -292,3 +292,12 @@ button:hover:enabled {
     justify-content: center;
 }
 }
+
+@keyframes highlightNew {
+  from { background-color: yellow; }
+  to { background-color: transparent; }
+}
+
+.highlight-new {
+  animation: highlightNew 2s ease-out;
+}

@@ -18,10 +18,11 @@ def start(order_data):
     order_data['prep_time'] = prep_time
     order_data['event'] = 'Cooking'
 
+    time.sleep(prep_time)
+
     # Send cooking event to pubsub 
     publish_event(order_data)
-
-    time.sleep(prep_time)
+    
 
     return prep_time
 
@@ -57,7 +58,6 @@ def startCooking():
     start(order_data)
     
     logging.info('Cooking done: %s', order_data['order_id'])
-    
     ready(order_data)
 
     return json.dumps({'success': True}), 200, {

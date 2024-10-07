@@ -128,7 +128,7 @@ function showEvent(event) {
         return;
     }
 
-    $("#events").append(createEventEntry(eventObj));
+    $("#events").prepend(createEventEntry(eventObj));
     
     currentEvent = eventObj.event;
 
