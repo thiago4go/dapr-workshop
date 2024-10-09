@@ -25,6 +25,6 @@ docker ps
 
 ## Let's get to coding
 
-Pivk your programming language:
+Pick your programming language:
 
 - [Python](./python.md)

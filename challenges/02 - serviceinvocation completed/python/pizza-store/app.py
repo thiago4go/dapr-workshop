@@ -43,16 +43,19 @@ def delete_order(order_id):
         return order_id
 
 # ------------------- Dapr Service Invocation ------------------- #
+
 def start_cook(order_data):
+    # Set base url
     base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
                     'DAPR_HTTP_PORT', '3500')
-    # Adding app id as part of the header
+    
+    # Adding pizza-kitchen's app id as part of the header
     headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
 
+    # Adding the endpoint /cook to the base url
     url = '%s/cook' % (base_url)
-    print('url: ' + url, flush=True)
 
-    # Invoking a service
+    # Invoking the service
     result = requests.post(
         url=url,
         data=json.dumps(order_data),
@@ -72,6 +75,7 @@ def createOrder():
     order_id = str(uuid.uuid4())
     order_data = request.json
 
+    # add order id to order data and set a new event to it
     order_data['order_id'] = order_id
     order_data['event'] = 'Sent to kitchen'
 

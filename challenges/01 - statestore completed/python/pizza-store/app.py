@@ -54,6 +54,7 @@ def createOrder():
     order_id = str(uuid.uuid4())
     order_data = request.json
 
+    # add order id to order data and set a new event to it
     order_data['order_id'] = order_id
     order_data['event'] = 'Sent to kitchen'
 
