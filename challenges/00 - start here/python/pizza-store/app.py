@@ -1,10 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from dapr.clients import DaprClient
 
-import uuid
 import logging
-import json
 
 DAPR_PORT = 8001
 

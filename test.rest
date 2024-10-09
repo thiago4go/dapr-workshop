@@ -8,18 +8,7 @@
 POST http://{{pizza-store}}/orders 
 content-type: application/json
 
-{
-    "customer": {
-      "name": "alice",
-      "email": "alice@email.com"
-    },
-    "items": [
-      {
-      "type":"vegetarian",
-      "amount": 2
-      }
-    ]
-}
+'{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }'
 
 ###Get order
 GET http://{{pizza-store}}/orders/7adb27dd-53c3-4f20-be7f-591e155c9f07

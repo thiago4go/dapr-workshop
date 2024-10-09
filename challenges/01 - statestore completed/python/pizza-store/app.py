@@ -46,7 +46,7 @@ def delete_order(order_id):
 
 # ------------------- Application routes ------------------- #
 
-# Cretae a new order
+# Create a new order
 @app.route('/orders', methods=['POST'])
 def createOrder():
 
@@ -68,6 +68,7 @@ def createOrder():
 @app.route('/orders/<order_id>', methods=['GET'])
 def getOrder(order_id):
     if order_id:
+        # Get order from state store
         result = get_order(order_id)   
         result_str = result.decode('utf-8')     
 
@@ -81,6 +82,7 @@ def getOrder(order_id):
 @app.route('/orders/<order_id>', methods=['DELETE'])
 def deleteOrder(order_id):
     if order_id:
+        # Delete order from state store
         delete_order(order_id)   
 
         return json.dumps({'orderId': order_id}), 200, {

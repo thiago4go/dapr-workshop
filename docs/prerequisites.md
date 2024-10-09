@@ -5,10 +5,12 @@
 - [Docker](https://docs.docker.com/engine/install/)
 - [Python 3](https://www.python.org/downloads/)
 - [Visual Studio Code](https://code.visualstudio.com/download) or your preferred IDE
+- [Redis Insights](https://redis.io/insight/) Optional: to visualize the data on Redis.
 
 ## Install Dapr
 
 1 - Follow [these steps](https://docs.dapr.io/getting-started/install-dapr-cli/) to install the Dapr CLI.
+
 2 - [Initialize Dapr](https://docs.dapr.io/getting-started/install-dapr-cli/):
 
 ```bash
