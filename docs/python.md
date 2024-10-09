@@ -192,7 +192,9 @@ To save the event we generate a new order UUID and set a new event: _Sent to Kit
 
 now, open a terminal and navigate to the folder where `app.py` is located. Run the following command:
 
-`dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../../resources  -- python3 app.py`
+```bash
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../../resources  -- python3 app.py
+```
 
 This command sets:
     - an app-id `pizza-store` to our application
@@ -202,7 +204,9 @@ This command sets:
 
 Look for the log entry below to guarantee that the state store was loaded successfully:
 
-`INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4`
+```bash
+INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
+```
 
 #### Testing the service
 
