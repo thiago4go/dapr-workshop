@@ -9,7 +9,7 @@ DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 DAPR_PORT = 8002
 
-# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 def start(order_data):
     # Generate a random prep time between 4 and 7 seconds
