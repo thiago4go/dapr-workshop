@@ -5,7 +5,7 @@
 On your terminal, run:
 
 ```bach
-git clone https://github.com/diagridlabs/dapr-workshop
+git clone https://github.com/diagrid-labs/dapr-workshop.git
 cd dapr-worksop
 ```
 
@@ -424,7 +424,7 @@ curl -H 'Content-Type: application/json' \
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
 
-```bash
+```zsh
 == APP == INFO:root:Cooking order: f75d9c94-155c-40ce-80c1-94296d2b51e9
 == APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 updated with event: Cooking
 == APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 is ready for delivery!
