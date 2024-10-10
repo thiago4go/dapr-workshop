@@ -4,7 +4,7 @@
 
 On your terminal, run:
 
-```bach
+```bash
 git clone https://github.com/diagrid-labs/dapr-workshop.git
 cd dapr-worksop
 ```
