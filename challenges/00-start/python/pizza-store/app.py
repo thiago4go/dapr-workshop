@@ -5,7 +5,7 @@ import logging
 
 DAPR_PORT = 8001
 
-logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)

@@ -9,7 +9,7 @@ import json
 DAPR_STORE_NAME = 'pizzastatestore'
 DAPR_PORT = 8001
 
-logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)

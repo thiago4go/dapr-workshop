@@ -1,17 +1,22 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from cloudevents.http import from_http
 from dapr.clients import DaprClient
 
 import uuid
+import os
+import time
 import logging
 import json
-import os
 import requests
 
 DAPR_STORE_NAME = 'pizzastatestore'
+DAPR_PUBSUB_NAME = 'pizzapubsub'
+DAPR_PUBSUB_TOPIC_NAME = 'order'
+
 DAPR_PORT = 8001
 
-logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
@@ -63,11 +68,59 @@ def start_cook(order_data):
     )
     print('result: ' + str(result), flush=True)
 
+def start_delivery(order_data):
+    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3500')
+
+    # Adding app id as part of the header
+    headers = {'dapr-app-id': 'pizza-delivery', 'content-type': 'application/json'}
+
+    url = '%s/deliver' % (base_url)
+    print('url: ' + url, flush=True)
+
+    # Invoking a service
+    result = requests.post(
+        url=url,
+        data=json.dumps(order_data),
+        headers=headers
+    )
+    print('result: ' + str(result), flush=True)
+
+    time.sleep(1)
+
 # ------------------- Dapr Pub/Sub ------------------- #
+
+# Endpoint triggered when a new event is published to the topic 'order'
+@app.route('/events', methods=['POST'])
+def orders_subscriber():
+    # retrieves the published order
+    order = from_http(request.headers, request.get_data())
+
+    # retrieves the order id and event type
+    order_id = order.data['order_id']
+    event_type = order.data['event']
+
+    logging.info('Subscription triggered for order: %s. Event: %s', order_id, event_type)
+
+    # saves the order to the state store
+    save_order(order.data['order_id'], order.data)
+
+    # check if the event is sent to kitchen
+    if event_type == 'Sent to kitchen':
+        # Send order to kitchen
+        time.sleep(4)
+        start_cook(order.data)
+
+    # check if the event is ready for delivery
+    if event_type == 'Ready for delivery':
+        # Starts a delivery
+        start_delivery(order.data)
+
+    return json.dumps({'success': "True"}), 200, {
+        'ContentType': 'application/json'}
 
 # ------------------- Application routes ------------------- #
 
-# Cretae a new order
+# Create a new order
 @app.route('/orders', methods=['POST'])
 def createOrder():
 
@@ -79,11 +132,14 @@ def createOrder():
     order_data['order_id'] = order_id
     order_data['event'] = 'Sent to kitchen'
 
-    # Save order to state store
-    save_order(order_id, order_data)
-
-    # Start cooking
-    start_cook(order_data)
+    # Publish an event/message using Dapr PubSub
+    with DaprClient() as client:
+        client.publish_event(
+            pubsub_name=DAPR_PUBSUB_NAME,
+            topic_name=DAPR_PUBSUB_TOPIC_NAME,
+            data=json.dumps(order_data),
+            data_content_type='application/json',
+        )
 
     return json.dumps({'orderId': order_id}), 200, {
         'ContentType': 'application/json'}
