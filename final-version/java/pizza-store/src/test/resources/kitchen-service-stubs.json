@@ -1,9 +1,0 @@
-{
-  "request": {
-    "method": "PUT",
-    "url": "/prepare"
-  },
-  "response": {
-    "status": 200    
-  }
-}
