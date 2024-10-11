@@ -378,7 +378,7 @@ base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTT
 
 Notice that the code above calls a URL with the host `localhost` with the port `3500`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
 
-TODO: ADD PICTURE
+![service-invocation](/imgs/service-invocation.png)
 
 2. Then, we add the headers and the endpoint:
 
