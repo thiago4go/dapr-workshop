@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 using System.Text.Json;
 
-
 namespace PizzaStore.Controllers;
 
 [ApiController]
