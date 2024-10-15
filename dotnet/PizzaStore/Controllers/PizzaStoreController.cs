@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 using System.Text.Json;
+using Microsoft.AspNetCore.Cors;
 
 namespace PizzaStore.Controllers;
 
@@ -52,12 +53,9 @@ public class PizzaStoreController : ControllerBase
     }
 
     // -------- Dapr Pub/Sub -------- //
-
     [HttpPost("/events")]
     public async Task<IActionResult> Process([FromBody] JsonDocument rawTransaction)
     {
-        Console.WriteLine("Processing order: " + JsonSerializer.Serialize(rawTransaction));
-
         var order = JsonSerializer.Deserialize<Order>(rawTransaction.RootElement.GetProperty("data").GetRawText());
 
         if (order is null)
@@ -65,22 +63,49 @@ public class PizzaStoreController : ControllerBase
             return BadRequest();
         }
 
+        Console.WriteLine("Processing order: " + order.OrderId);
+
         await SaveOrderToStateStore(order);
 
         // check if event is sent to kitchen
         if (order.Event == "Sent to kitchen")
         {
-            await Task.Delay(4000);
             // Start cooking
+            await Cook(order);
         }
 
         if (order.Event == "Ready for delivery")
         {
             //start delivery
+            await Deliver(order);
         }
 
         return Ok();
     }
+
+    // -------- Dapr Service Invocation -------- //
+    private async Task Cook(Order order)
+    {
+        var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-kitchen");
+
+        // To set a timeout on the HTTP client:
+        //client.Timeout = TimeSpan.FromSeconds();
+
+        var response = await client.PostAsJsonAsync("/cook", order, cancellationToken: CancellationToken.None);
+        Console.WriteLine("Returned: " + response.StatusCode);
+    }
+
+    private async Task Deliver(Order order)
+    {
+        var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-delivery");
+
+        // To set a timeout on the HTTP client:
+        //client.Timeout = TimeSpan.FromSeconds(2);
+
+        var response = await client.PostAsJsonAsync("/deliver", order, cancellationToken: CancellationToken.None);
+        Console.WriteLine("Returned: " + response.StatusCode);
+    }
+
 
     // -------- Application routes -------- //
 
@@ -95,6 +120,7 @@ public class PizzaStoreController : ControllerBase
 
         // create a new order id
         order.OrderId = Guid.NewGuid().ToString();
+        order.Event = "Sent to kitchen";
 
         Console.WriteLine("Posting order: " + order.Address);
 
@@ -132,4 +158,4 @@ public class PizzaStoreController : ControllerBase
 }
 
 
-// dapr run --app-id pizza-store --app-protocol http --app-port 5294 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
+// dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
