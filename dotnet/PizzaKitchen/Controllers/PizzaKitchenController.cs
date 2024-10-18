@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 using System.Text.Json;
+using Microsoft.AspNetCore.Cors;
 
 namespace PizzaKitchen.Controllers;
 
@@ -88,4 +89,4 @@ public class PizzaKitchenController : ControllerBase
 }
 
 
-// dapr run --app-id pizza-store --app-protocol http --app-port 5294 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
+// dapr run --app-id pizza-kitchen --app-protocol http --app-port 5007 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 using System.Text.Json;
+using Microsoft.AspNetCore.Cors;
+
 
 namespace PizzaDelivery.Controllers;
 
@@ -56,7 +58,7 @@ public class PizzaDeliveryController : ControllerBase
         return Ok(order);
     }
 
-    private StartDelivery(Order order)
+    private async Task StartDelivery(Order order)
     {
         // Simulate delivery time and events
         await Task.Delay(3000);
@@ -82,4 +84,4 @@ public class PizzaDeliveryController : ControllerBase
 }
 
 
-// dapr run --app-id pizza-store --app-protocol http --app-port 5294 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
+// dapr run --app-id pizza-delivery --app-protocol http --app-port 5058 --dapr-http-port 3504 --resources-path ../resources  -- dotnet run
