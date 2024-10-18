@@ -3,8 +3,11 @@
 ## Download and install the following dependencies
 
 - [Docker](https://docs.docker.com/engine/install/)
-- [Python 3](https://www.python.org/downloads/)
 - [Visual Studio Code](https://code.visualstudio.com/download) or your preferred IDE
+- [Python 3](https://www.python.org/downloads/)
+- [Python Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [dotnet 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [C# Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp)
 - [Redis Insights](https://redis.io/insight/) Optional: to visualize the data on Redis.
 
 ## Install Dapr
@@ -29,4 +32,5 @@ docker ps
 
 Pick your programming language:
 
-- [Python](./python.md)
+- [Python](/docs/challenge-1/python.md)
+- [dotnet](/docs/challenge-1/dotnet.md)

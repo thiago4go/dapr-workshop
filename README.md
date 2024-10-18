@@ -40,8 +40,3 @@ Then, we will learn how to leverage Dapr's Pub/Sub API to publish events to Redi
 ## Getting started
 
 In order to partake in the workshop, you will be required to install the following [technical prerequisites](./docs/prerequisites.md).
-
-After that, pick your programming language to start the first challenge:
-
-- [Python](/docs/challenge-1/python.md)
-- [dotnet](/docs/challenge-1/dotnet.md)
