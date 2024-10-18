@@ -1,33 +1,3 @@
-# Python
-
-## Clone the repository and initialize the environment
-
-On your terminal, run:
-
-```bash
-git clone https://github.com/diagrid-labs/dapr-workshop.git
-cd dapr-worksop
-```
-
-Navigate to the starting point:
-
-```bash
-cd start-here
-```
-
-Install vevn:
-
-```bash
-pip install virtualenv
-```
-
-Initialize the virtual environment:
-
-```bash
-python -m venv env
-source env/bin/activate
-```
-
 ## Challenge 1 - State Store
 
 ### Overview
