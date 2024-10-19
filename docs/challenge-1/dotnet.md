@@ -1,31 +1,12 @@
-# Python
+# dotnet
 
 ## Clone the repository and initialize the environment
 
 On your terminal, run:
 
 ```bash
-git clone https://github.com/diagrid-labs/dapr-workshop.git
-cd dapr-worksop
-```
-
-Navigate to the starting point:
-
-```bash
-cd start-here
-```
-
-Install vevn:
-
-```bash
-pip install virtualenv
-```
-
-Initialize the virtual environment:
-
-```bash
-python -m venv env
-source env/bin/activate
+git clone https://github.com/diagrid-labs/dapr-workshop-csharp.git
+cd dapr-workshop-csharp
 ```
 
 ## Challenge 1 - State Store
@@ -63,22 +44,12 @@ This is a component definition file named `pizzastatestore`. In the _spec_ defin
 
 ### Installing the dependencies
 
-Now navigate to `python/pizza-store`. This folder contains the `app.py` file which contains our application. Before start coding, let's install our dependencies.
-
-Let's start by creating a new file called `requirements.txt`. This file will hold our dependencies. Add the content below to it:
-
-```text
-Flask
-flask-cors
-dapr
-uvicorn
-typing-extensions
-```
-
-Run the command below to install the dependencies:
+Now navigate to `/PizzaStore`. This folder contains the the files for out first service. Before start coding, let's install our Dapr dependencies.
 
 ```bash
-pip install -r pizza-store/requirements.txt
+cs PizzaStore
+
+dotnet add package Dapr.Client
 ```
 
 ### Creating the service
@@ -89,6 +60,7 @@ Open `app.py`. Notice the two import lines, let's add a couple more libraries th
 from flask import Flask, request
 from flask_cors import CORS
 from dapr.clients import DaprClient
+
 
 import uuid
 import logging
