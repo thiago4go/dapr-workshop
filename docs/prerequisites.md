@@ -3,12 +3,26 @@
 ## Download and install the following dependencies
 
 - [Docker](https://docs.docker.com/engine/install/)
-- [Visual Studio Code](https://code.visualstudio.com/download) or your preferred IDE
+- [Visual Studio Code](https://code.visualstudio.com/download)
+- [Redis Insights](https://redis.io/insight/) Optional: to visualize the data on Redis.
+
+<details>
+
+<summary>Python</summary>
+
 - [Python 3](https://www.python.org/downloads/)
 - [Python Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+
+</details>
+
+<details>
+
+<summary>dotnet</summary>
+
 - [dotnet 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [C# Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp)
-- [Redis Insights](https://redis.io/insight/) Optional: to visualize the data on Redis.
+
+</details>
 
 ## Install Dapr
 
@@ -29,6 +43,61 @@ docker ps
 ![containers](./../imgs/docker-ps.png)
 
 ## Let's get to coding
+
+### Clone the repository and initialize the environment
+
+<details>
+  
+<summary>Python</summary>
+
+On your terminal, run:
+
+```bash
+git clone https://github.com/diagrid-labs/dapr-workshop.git
+cd dapr-worksop
+```
+
+Navigate to the starting point:
+
+```bash
+cd start-here
+```
+
+Install vevn:
+
+```bash
+pip install virtualenv
+```
+
+Initialize the virtual environment:
+
+```bash
+python -m venv env
+source env/bin/activate
+```
+
+</details>
+
+<details>
+  
+<summary>dotnet</summary>
+
+On your terminal, run:
+
+```bash
+git clone https://github.com/diagrid-labs/dapr-workshop.git
+cd dapr-worksop
+```
+
+Navigate to the starting point:
+
+```bash
+cd start-here
+```
+
+</details>
+
+### Start the first challenge
 
 Pick your programming language:
 
