@@ -9,7 +9,7 @@ Microservices are popular for multiple reasons. They can be written in any progr
 
 ## Goals
 
-Our goal for this workshop is to understand how 3 of the most popular Dapr Building Blocks work: [State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/), [Service Invocation](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/), and [Publish/Subscribe](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
+You will leave this workshop understanding how 3 of the most popular Dapr Building Blocks work: [State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/), [Service Invocation](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/), and [Publish/Subscribe](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
 We are going to create 3 services to manage simulate the process of ordering a pizza:
 

@@ -47,121 +47,118 @@ This is a component definition file named `pizzastatestore`. In the _spec_ defin
 Now navigate to `/PizzaStore`. This folder contains the the files for out first service. Before start coding, let's install our Dapr dependencies.
 
 ```bash
-cs PizzaStore
+cd PizzaStore
 
 dotnet add package Dapr.Client
 ```
 
 ### Creating the service
 
-Open `app.py`. Notice the two import lines, let's add a couple more libraries there:
+Inside `Controllers/PizzaStoreController.cs` let's add a couple of import statements.
 
-```python
-from flask import Flask, request
-from flask_cors import CORS
-from dapr.clients import DaprClient
-
-
-import uuid
-import logging
-import json
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Dapr.Client;
+using System.Text.Json;
 ```
 
-We are now importing _DaprClient_ from _dapr.clients_. That's what we will use to manage the state in our Redis instance.
+We are now importing _Dapr.Client_ from The Dapr dotnet SDK. That's what we will use to manage the state in our Redis instance.
 
 #### Managing state
 
-Let's create three new functions: `save_order`, `get_order`, and `delete_order`.
+Let's create three new functions: `SaveOrderToStateStore`, `GetOrderFromStateStore`, and `DeleteOrderFromStateStore`.
 
-Start by creating a const:
+Start by creating a readonly string to represent the name of our statestore component defined in the previous step:
 
-```python
-DAPR_STORE_NAME = 'pizzastatestore'
+```csharp
+private readonly string StateStoreName = "pizzastatestore";
 ```
-
-The name given to this const is the same name provided to our resources yaml file, created in the step above.
 
 Under **# Dapr State Store #** add the following lines of code:
 
-```python
-def save_order(order_id, order_data):
-    with DaprClient() as client:
-        # Save state 
-        client.save_state(DAPR_STORE_NAME, order_id, str(order_data))
-        logging.info('Saving Order %s with event %s', order_id, order_data['event'])
+```csharp
+// save order to state store
+private async Task SaveOrderToStateStore(Order order)
+{
+    var client = new DaprClientBuilder().Build();
+    await client.SaveStateAsync(StateStoreName, order.OrderId, order);
+    Console.WriteLine("Saving order " + order.OrderId + " with event " + order.Event);
 
-        return order_id
-    
-def get_order(order_id):
-    with DaprClient() as client:
-        # Get state
-        result = client.get_state(DAPR_STORE_NAME, order_id)
-        logging.info('Order result - %s', str(result.data))
+    return;
+}
 
-        return result.data
-    
-def delete_order(order_id):
-    with DaprClient() as client:
-        # Delete state
-        client.delete_state(DAPR_STORE_NAME, order_id)
-        logging.info('Order deleted - %s', order_id)
+// get order from state store
+private async Task<Order> GetOrderFromStateStore(string orderId)
+{
+    var client = new DaprClientBuilder().Build();
+    var order = await client.GetStateEntryAsync<Order>(StateStoreName, orderId);
+    Console.WriteLine("Order result: " + order.Value);
 
-        return order_id
+    return order.Value;
+}
+
+// delete order from state store
+private async Task DeleteOrderFromStateStore(string orderId)
+{
+    var client = new DaprClientBuilder().Build();
+    await client.DeleteStateAsync(StateStoreName, orderId);
+    Console.WriteLine("Deleted order " + orderId);
+
+    return;
+}
 ```
 
-1. `client.save_state(DAPR_STORE_NAME, order_id, str(order_data))` saves the state the Redis using a key/value pair. We need to pass the state store name, the order id as a **key**, and a json representation of the order as a **value**.
+1. `await client.SaveStateAsync(StateStoreName, order.OrderId, order);` saves the state the Redis using a key/value pair. We need to pass the state store name, the order id as a **key**, and a json representation of the order as a **value**.
 
-2. `result = client.get_state(DAPR_STORE_NAME, order_id)` retrieves the state from the store. It requires a key and the state store name.
+2. `await client.GetStateEntryAsync<Order>(StateStoreName, orderId);` retrieves the state from the store. It requires a key and the state store name.
 
-3. `client.delete_state(DAPR_STORE_NAME, order_id)` deletes the state from the store. It also requires a key and the state store name.
+3. `await client.DeleteStateAsync(StateStoreName, orderId);` deletes the state from the store. It also requires a key and the state store name.
 
 ### Creating the app routes
 
 Before testing our application, we need to create routes so we are able to manage our state store from the frontend and by calling the REST APIs directly. Add three new routes below **# Application routes #**:
 
-```python
-# Create a new order
-@app.route('/orders', methods=['POST'])
-def createOrder():
+```csharp
+// App route: Post order
+[HttpPost("/orders", Name = "PostOrder")]
+public async Task<ActionResult> PostOrder([FromBody] Order order)
+{
+    if (order is null)
+    {
+        return BadRequest();
+    }
 
-    # Create a new order id
-    order_id = str(uuid.uuid4())
-    order_data = request.json
+    // create a new order id
+    order.OrderId = Guid.NewGuid().ToString();
+    order.Event = "Sent to kitchen";
 
-    # add order id to order data and set a new event to it
-    order_data['order_id'] = order_id
-    order_data['event'] = 'Sent to kitchen'
+    Console.WriteLine("Posting order: " + order.Address);
 
-    # Save order to state store
-    save_order(order_id, order_data)
+    // Save order to state store
+    await SaveOrderToStateStore(order);
 
-    return json.dumps({'orderId': order_id}), 200, {
-        'ContentType': 'application/json'}
+    return Ok(order);
+}
 
-# Get order by id
-@app.route('/orders/<order_id>', methods=['GET'])
-def getOrder(order_id):
-    if order_id:
-        result = get_order(order_id)   
-        result_str = result.decode('utf-8')     
+//App route: Get order by order id
+[HttpGet("/orders/{orderId}", Name = "GetOrderByOrderId")]
+public async Task<ActionResult<Order>> GetOrderByOrderId(string orderId)
+{
+    var order = await GetOrderFromStateStore(orderId);
+    if (order == null)
+    {
+        return NotFound();
+    }
+    return Ok(order);
+}
 
-        return json.dumps(result_str), 200, {
-        'ContentType': 'application/json'}
-    
-    return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
-        'ContentType': 'application/json'}
-
-# Delete order by id
-@app.route('/orders/<order_id>', methods=['DELETE'])
-def deleteOrder(order_id):
-    if order_id:
-        delete_order(order_id)   
-
-        return json.dumps({'orderId': order_id}), 200, {
-        'ContentType': 'application/json'}
-    
-    return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
-        'ContentType': 'application/json'}
+//App route: delete order by order id
+[HttpDelete("/orders/{orderId}", Name = "DeleteOrderByOrderId")]
+public async Task<ActionResult> DeleteOrderByOrderId(string orderId)
+{
+    await DeleteOrderFromStateStore(orderId);
+    return Ok();
+}
 ```
 
 To save the event we generate a new order UUID and set a new event: _Sent to Kitchen_. We will use these events during the next challenges.
@@ -171,7 +168,7 @@ To save the event we generate a new order UUID and set a new event: _Sent to Kit
 Now, open a terminal and navigate to the folder where `app.py` is located. Run the following command:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
 ```
 
 This command sets:
@@ -200,7 +197,6 @@ curl -H 'Content-Type: application/json' \
 If you downloaded Redis Insight, you can visualize the new entry there:
 
 ![redis-insight](/imgs/redis-insight.png)
-
 
 Take note of the new order-id generated and run the following command to get the newly created order:
 

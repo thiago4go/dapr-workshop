@@ -11,166 +11,130 @@ To learn more about the Service Invocation building block, refer to the [Dapr do
 
 ### Installing the dependencies
 
-Navigate to `python/pizza-kitchen`. Let's install our dependencies
-
-Open the file called `requirements.txt`. Add the content below to it:
-
-```text
-Flask
-dapr
-cloudevents
-uvicorn
-typing-extensions
-```
-
-Run the command below to install the dependencies:
+Navigate to `/PizzaKitchen`. Before start coding, let's install our Dapr dependencies.
 
 ```bash
-pip install -r requirements.txt
+cd PizzaKitchen
+dotnet add package Dapr.Client
 ```
 
 ### Creating the service
 
-Open `app.py`. Add the import statements below:
+Open `/Controllers/PizzaKitchenController.cs` Let's add a couple of import statements.
 
-```python
-from flask import Flask, request
-from dapr.clients import DaprClient
-
-import json
-import time
-import logging
-import random
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Dapr.Client;
 ```
 
 ### Creating the app route
 
 Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
 
-```python
-@app.route('/cook', methods=['POST'])
-def startCooking():
-    order_data = request.json
-    logging.info('Cooking order: %s', order_data['order_id'])
+```csharp
+// App route: Post order
+[HttpPost("/cook", Name = "StartCook")]
+public async Task<ActionResult> PostOrder([FromBody] Order order)
+{
+    if (order is null)
+    {
+        return BadRequest();
+    }
 
-    # Start cooking
-    start(order_data)
-    
-    logging.info('Cooking done: %s', order_data['order_id'])
-    
-    # Set the order as ready
-    ready(order_data)
+    Console.WriteLine("Cooking order: " + order.OrderId);
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
+    await StartCooking(order);
+
+    Console.WriteLine("Cooking done: " + order.OrderId);
+
+    await ReadyForDelivery(order);
+
+    Console.WriteLine("Order ready for delivery: " + order.OrderId);
+
+    return Ok(order);
+}
 ```
 
 This route is fairly simple. It is a POST request with the `order` content created in the last challenge. We will start the order and, after it is cooked, we will say it is ready.
 
 Add two helper functions to modify the order to _Cooking_ and to _Ready for delivery_.
 
-```python
-def start(order_data):
-    # Generate a random prep time between 4 and 7 seconds
-    prep_time = random.randint(4, 7)
-    
-    order_data['prep_time'] = prep_time
-    order_data['event'] = 'Cooking'
+```csharp
+private async Task StartCooking(Order order)
+{
+    var prepTime = new Random().Next(4, 7);
 
-    time.sleep(prep_time)
+    order.PrepTime = prepTime;
+    order.Event = "Cooking";
+   
+    await Task.Delay(prepTime * 1000);
 
-    return prep_time
+    return;
+}
 
-def ready(order_data):
-    order_data['event'] = 'Ready for delivery'
+private async Task ReadyForDelivery(Order order)
+{
+    order.Event = "Ready for delivery";
 
-    return order_data
+    return;
+}
 ```
 
 #### Calling the app route
 
 Let's go back to the _pizza-store_ service. We will create a Service Invocation action to call the `/cook` endpoint from our _pizza-kitchen_ service.
 
-First, update the `createOrder()` function, add the following line after the `save_order((order_id, order_data))` invocation:
+First, update the `PostOrder()` function, add the following line after the `await SaveOrderToStateStore(order);` invocation:
 
-```python
- # Start cooking
-start_cook(order_data)
+```csharp
+// Start cooking
+await Cook(order);
 ```
 
 Now, under **# Dapr Service Invocation #**, add the code below:
 
-```python
-def start_cook(order_data):
-    # Set base url
-    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
-                    'DAPR_HTTP_PORT', '3500')
-    
-    # Adding pizza-kitchen's app id as part of the header
-    headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
+```csharp
+private async Task Cook(Order order)
+{
+    var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-kitchen");
 
-    # Adding the endpoint /cook to the base url
-    url = '%s/cook' % (base_url)
-
-    # Invoking the service
-    result = requests.post(
-        url=url,
-        data=json.dumps(order_data),
-        headers=headers
-    )
-    print('result: ' + str(result), flush=True)
+    var response = await client.PostAsJsonAsync("/cook", order, cancellationToken: CancellationToken.None);
+    Console.WriteLine("Returned: " + response.StatusCode);
+}
 ```
 
 Let's break down the code above.
 
-1. First we are setting the base URL:
+1. First are using the `DaprClient` to create an HttpClient Invocation object with the app id of the service we want to invoke:
 
-```python
-base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3500')
+```csharp
+var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-kitchen");
 ```
 
-Notice that the code above calls a URL with the host `localhost` with the port `3500`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+The code above wraps an http call to the host `localhost` with the port `3500`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
-2. Then, we add the headers and the endpoint:
+2. Then, we make the call to the endpoint `/cook`, passing our _order_ as the body of the POST request:
 
-```python
-# Adding pizza-kitchen's app id as part of the header
-headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
-
-# Adding the endpoint /cook to the base url
-url = '%s/cook' % (base_url)
+```csharp
+var response = await client.PostAsJsonAsync("/cook", order, cancellationToken: CancellationToken.None);
 ```
-
-The code above creates the header that is going to be attached to our request. The most important piece is the `'dapr-app-id': 'pizza-kitchen'`. By adding this to the header and including the route `/cook` to the end of the base URL, the _pizza-store_ sidecar knows exactly the service and route that it needs to invoke.
 
 With this, services only need to communicate to sidecars through localhost and the sidecar handles the discovery capabilities.
-
-3. Finally, we send the request:
-
-```python
-# Invoking the service
-result = requests.post(
-    url=url,
-    data=json.dumps(order_data),
-    headers=headers
-)
-print('result: ' + str(result), flush=True)
-```
 
 #### Running the application
 
 We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
 ```
 
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  -- python3 app.py
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
 ```
 
 #### Testing the service
@@ -187,10 +151,9 @@ curl -H 'Content-Type: application/json' \
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
 
 ```zsh
-== APP == INFO:root:Cooking order: f75d9c94-155c-40ce-80c1-94296d2b51e9
-== APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 updated with event: Cooking
-== APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 is ready for delivery!
-== APP == INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 20:48:48] "POST /cook HTTP/1.1" 200 -
+== APP == Cooking order: 1393ff15-10fa-4a71-ad23-851157f9f748
+== APP == Cooking done: 1393ff15-10fa-4a71-ad23-851157f9f748
+== APP == Order ready for delivery: 1393ff15-10fa-4a71-ad23-851157f9f748
 ```
 
 TODO: Add information about VPNs and Firewalls

@@ -26,7 +26,7 @@ To learn more about the Publish & subscribe building block, refer to the [Dapr d
 
 ### Create the Pub/Sub component
 
-Open the `python/resources` folder and create a file called `pubsub.yaml`, add the following content:
+Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -47,7 +47,7 @@ Similar to our `statestore.yaml` file, this new definition creates a new compone
 
 ### Create the subscription definition
 
-Still inside the `resources` folder, create a new file called `subscription.yaml`. Add the following to it:
+Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following to it:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -62,14 +62,13 @@ scopes:
 - pizza-store  
 ```
 
-This file of kind subscription speciefies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
+This file of kind subscription specifies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
 
 As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
 
-
 ### Installing the dependencies
 
-Navigate to `python/pizza-delivery`. Let's install our dependencies
+Navigate to `/pizza-delivery`. Let's install our dependencies
 
 Open the file called `requirements.txt`. Add the content below to it:
 
@@ -352,6 +351,12 @@ Finally, opena  third terminal window and navigate to the _pizza-delivery_ servi
 dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
 ```
 
+Check for the logs for all three services, you should now see the pubsub component loaded:
+
+```bash
+INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
+```
+
 #### Testing the service
 
 Open a fourth terminal window and create a new order:
@@ -433,3 +438,9 @@ dapr run -f .
 ```
 
 All three services will run at the same time and log events at the same terminal window.
+
+## Congratulations
+
+Congratulations in completing all of the three challenges. Stop by our booth to show all challenges completed and get some swag for your hard work!
+
+You have now scratched the surface of what Dapr can do. It's highly recommended navigating to the [Dapr docs](https://docs.dapr.io/) and learning more about it.

@@ -199,7 +199,6 @@ If you downloaded Redis Insight, you can visualize the new entry there:
 
 ![redis-insight](/imgs/redis-insight.png)
 
-
 Take note of the new order-id generated and run the following command to get the newly created order:
 
 ```bash

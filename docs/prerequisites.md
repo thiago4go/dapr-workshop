@@ -53,14 +53,8 @@ docker ps
 On your terminal, run:
 
 ```bash
-git clone https://github.com/diagrid-labs/dapr-workshop.git
-cd dapr-worksop
-```
-
-Navigate to the starting point:
-
-```bash
-cd start-here
+git clone https://github.com/diagrid-labs/dapr-workshop-python.git
+cd dapr-worksop-python
 ```
 
 Install vevn:
@@ -85,14 +79,8 @@ source env/bin/activate
 On your terminal, run:
 
 ```bash
-git clone https://github.com/diagrid-labs/dapr-workshop.git
-cd dapr-worksop
-```
-
-Navigate to the starting point:
-
-```bash
-cd start-here
+git clone https://github.com/diagrid-labs/dapr-workshop-csharp.git
+cd dapr-worksop-csharp
 ```
 
 </details>

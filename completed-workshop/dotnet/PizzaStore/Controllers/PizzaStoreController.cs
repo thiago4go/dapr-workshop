@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 using System.Text.Json;
-using Microsoft.AspNetCore.Cors;
 
 namespace PizzaStore.Controllers;
 
@@ -87,9 +86,6 @@ public class PizzaStoreController : ControllerBase
     private async Task Cook(Order order)
     {
         var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-kitchen");
-
-        // To set a timeout on the HTTP client:
-        //client.Timeout = TimeSpan.FromSeconds();
 
         var response = await client.PostAsJsonAsync("/cook", order, cancellationToken: CancellationToken.None);
         Console.WriteLine("Returned: " + response.StatusCode);

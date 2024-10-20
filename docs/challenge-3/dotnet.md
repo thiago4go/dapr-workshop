@@ -26,7 +26,7 @@ To learn more about the Publish & subscribe building block, refer to the [Dapr d
 
 ### Create the Pub/Sub component
 
-Open the `python/resources` folder and create a file called `pubsub.yaml`, add the following content:
+Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -47,7 +47,7 @@ Similar to our `statestore.yaml` file, this new definition creates a new compone
 
 ### Create the subscription definition
 
-Still inside the `resources` folder, create a new file called `subscription.yaml`. Add the following to it:
+Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following to it:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -62,235 +62,210 @@ scopes:
 - pizza-store  
 ```
 
-This file of kind subscription speciefies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
+This file of kind subscription specifies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
 
 As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
 
-
 ### Installing the dependencies
 
-Navigate to `python/pizza-delivery`. Let's install our dependencies
-
-Open the file called `requirements.txt`. Add the content below to it:
-
-```text
-Flask
-dapr
-cloudevents
-uvicorn
-typing-extensions
-```
-
-Run the command below to install the dependencies:
+Navigate to `/PizzaDelivery`. Before start coding, let's install our Dapr dependencies.
 
 ```bash
-pip install -r requirements.txt
+cd PizzaDelivery
+dotnet add package Dapr.Client
 ```
 
 ### Creating the service
 
-Open `app.py`. Add the import statements below:
+Open `/Controllers/PizzaDeliveryController.cs` Let's add a couple of import statements.
 
-```python
-from flask import Flask, request
-from dapr.clients import DaprClient
-
-import json
-import time
-import logging
-```
-
-Add the following constants, we will use them to connect to our Pub/Sub and topic:
-
-```python
-DAPR_PUBSUB_NAME = 'pizzapubsub'
-DAPR_PUBSUB_TOPIC_NAME = 'order'
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Dapr.Client;
 ```
 
 ### Creating the app route
 
 Leet's create our route `/deliver` that will tell the service to start a  delivery for our order. Below **# Application routes #** add the following:
 
-```python
-@app.route('/deliver', methods=['POST'])
-def startDelivery():
-    order_data = request.json
-    logging.info('Delivery started: %s', order_data['order_id'])
+```csharp
+// App route: Post order
+[HttpPost("/deliver", Name = "StartCook")]
+public async Task<ActionResult> PostOrder([FromBody] Order order)
+{
+    if (order is null)
+    {
+        return BadRequest();
+    }
 
-    # Start delivery
-    deliver(order_data)
+    Console.WriteLine("Delivery started: " + order.OrderId);
 
-    logging.info('Delivery completed: %s', order_data['order_id'])
+    await StartDelivery(order);
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
+    Console.WriteLine("Delivery completed: " + order.OrderId);
+
+    return Ok(order);
+}
 ```
 
-Create a new function called `deliver`. This will simply take our order and update it with multiple events, adding a small delay in between calls:
+Create a new function called `StartDelivery`. This will simply take our order and update it with multiple events, adding a small delay in between calls:
 
-```python
-def deliver(order_data):
-    # Simulate delivery time and events
-    time.sleep(3)
-    order_data['event'] = 'Delivery started'
-    publish_event(order_data)
+```csharp
+private async Task StartDelivery(Order order)
+{
+  // Simulate delivery time and events
+  await Task.Delay(3000);
+  order.Event = "Delivery started";
+  await PublishEvent(order);
 
-    time.sleep(3)
-    order_data['event'] = 'Order picked up by driver'
-    publish_event(order_data)
+  await Task.Delay(3000);
+  order.Event = "Order picked up by driver";
+  await PublishEvent(order);
 
-    time.sleep(5)
-    order_data['event'] = 'En-route'
-    publish_event(order_data)
-    
-    time.sleep(5)
-    order_data['event'] = 'Nearby'
-    publish_event(order_data)
+  await Task.Delay(5000);
+  order.Event = "En-route";
+  await PublishEvent(order);
 
-    time.sleep(5)
-    order_data['event'] = 'Delivered'
-    publish_event(order_data)
+  await Task.Delay(5000);
+  order.Event = "Nearby";
+  await PublishEvent(order);
+
+  await Task.Delay(5000);
+  order.Event = "Delivered";
+  await PublishEvent(order);
+}
 ```
 
 #### Publishing the event
 
 Now let's publish! We will use the Dapr SDK to submit the event to our PubSub. Under **Dapr pub/sub** add:
 
-```python
-def publish_event(order_data):
-    with DaprClient() as client:
-        # Publish an event/message using Dapr PubSub
-        result = client.publish_event(
-            pubsub_name=DAPR_PUBSUB_NAME,
-            topic_name=DAPR_PUBSUB_TOPIC_NAME,
-            data=json.dumps(order_data),
-            data_content_type='application/json',
-        )
+```csharp
+public async Task<IActionResult> PublishEvent(Order order)
+{
+  if (order is null)
+  {
+      return BadRequest();
+  }
+
+  DaprClient client = new DaprClientBuilder().Build();
+
+  // create metadata
+  var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
+
+  await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+
+  return Ok();
+}
 ```
+
+The code above uses the Dapr SDK to publish an event to our PubSub infrastructure (Redis). That event is the `order` in json format.
 
 Our Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
 
 #### Sending the Kitchen events
 
-Open `python/pizza-kithen` and add the following lines below the import statements:
+Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and add the following lines to the controller class:
 
-```python
-DAPR_PUBSUB_NAME = 'pizzapubsub'
-DAPR_PUBSUB_TOPIC_NAME = 'order'
+```csharp
+private readonly string PubSubName = "pizzapubsub";
+private readonly string TopicName = "order";
 ```
 
 Under **Dapr pub/sub**, add the following lines to send our event to the pub/sub:
 
-```python
-def publish_event(order_data):
-    with DaprClient() as client:
-        # Publish an event/message using Dapr PubSub
-        result = client.publish_event(
-            pubsub_name=DAPR_PUBSUB_NAME,
-            topic_name=DAPR_PUBSUB_TOPIC_NAME,
-            data=json.dumps(order_data),
-            data_content_type='application/json',
-        )
+```csharp
+public async Task<IActionResult> PublishEvent(Order order)
+{
+  if (order is null)
+  {
+      return BadRequest();
+  }
+
+  DaprClient client = new DaprClientBuilder().Build();
+
+  // create metadata
+  var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
+  await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+
+  return Ok();
+}
 ```
 
-Now, Update the `start(order_data):` and the `ready(order_data):` functions by adding a call to our `publish_event`:
+Now, Update the `StartCooking` and the `ReadyForDelivery` functions by adding a call to our `PublishEvent`:
 
-```python
-def start(order_data):
-    # Generate a random prep time between 4 and 7 seconds
-    prep_time = random.randint(4, 7)
-    
-    order_data['prep_time'] = prep_time
-    order_data['event'] = 'Cooking'
+```csharp
+private async Task StartCooking(Order order)
+{
+  var prepTime = new Random().Next(4, 7);
 
-    # Send cooking event to pubsub 
-    publish_event(order_data)
+  order.PrepTime = prepTime;
+  order.Event = "Cooking";
 
-    time.sleep(prep_time)
+  // Send cooking event to pubsub 
+  await PublishEvent(order);
 
-    return prep_time
+  await Task.Delay(prepTime * 1000);
 
-def ready(order_data):
-    order_data['event'] = 'Ready for delivery'
+  return;
+}
 
-    # Send ready event to pubsub 
-    publish_event(order_data)
+private async Task ReadyForDelivery(Order order)
+{
+  order.Event = "Ready for delivery";
 
-    return order_data
+  // Send cooking event to pubsub 
+  await PublishEvent(order);
+
+  return;
+}
 ```
 
 #### Starting a delivery service
 
-Going back to the _pizza-store_ service, let's update the import statements:
+Going back to the _pizza-store_ service add the following readyonly strings referencing our pub/sub and the topic we will publish to:
 
-```python
-from flask import Flask, request
-from flask_cors import CORS
-from dapr.clients import DaprClient
-
-import uuid
-import logging
-import json
-import os
-import requests
-```
-
-Add the folliowing contants referencing our pub/sub and the topic we will publish to:
-
-```python
-DAPR_PUBSUB_NAME = 'pizzapubsub'
-DAPR_PUBSUB_TOPIC_NAME = 'order'
+```csharp
+private readonly string PubSubName = "pizzapubsub";
+private readonly string TopicName = "order";
 ```
 
 Now, let's add a new service invocation function under **Dapr Service Invocation**. This is the same process from the second challenge, but now we are sending the order to our _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
 
-```python
-def start_delivery(order_data):
-    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3500')
+```csharp
+private async Task Deliver(Order order)
+{
+    var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-delivery");
 
-    # Adding app id as part of the header
-    headers = {'dapr-app-id': 'pizza-delivery', 'content-type': 'application/json'}
-
-    url = '%s/deliver' % (base_url)
-    print('url: ' + url, flush=True)
-
-    # Invoking a service
-    result = requests.post(
-        url=url,
-        data=json.dumps(order_data),
-        headers=headers
-    )
-    print('result: ' + str(result), flush=True)
-
-    time.sleep(1)
+    var response = await client.PostAsJsonAsync("/deliver", order, cancellationToken: CancellationToken.None);
+    Console.WriteLine("Returned: " + response.StatusCode);
+}
 ```
 
 #### Publishing and subscribing to events
 
-First, let's change our `createOrder():` function to publish an event to our pub/sub. Replace the line below:
+First, let's change our `PostOrder():` function to publish an event to our pub/sub. Replace the line below:
 
-```python
-# Save order to state store
-save_order(order_id, order_data)
+```csharp
+// Save order to state store
+await SaveOrderToStateStore(order);
 
-# Start cooking
-start_cook(order_data)
+// Start cooking
+await Cook(order);
 ```
 
 By:
 
-```python
-# Publish an event/message using Dapr PubSub
-with DaprClient() as client:
-    client.publish_event(
-        pubsub_name=DAPR_PUBSUB_NAME,
-        topic_name=DAPR_PUBSUB_TOPIC_NAME,
-        data=json.dumps(order_data),
-        data_content_type='application/json',
-    )
+```csharp
+// publish the order
+var client = new DaprClientBuilder().Build();
+
+// create metadata
+var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
+await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
 ```
 
-With this, we are now replacing direct calls to `save_oder` and `start_cook`  with a `publish_event` process. This will send the events to Redis(our Pub/Sub component). In the next step we will subscribe to these events and save them to our state store.
+With this, we are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to Redis(our Pub/Sub component). In the next step we will subscribe to these events and save them to our state store.
 
 #### Subscribing to events
 
@@ -298,58 +273,64 @@ Let's create the route `/events`. This route was previously specified in our `su
 
 Under **Dapr Pub/Sub** include:
 
-```python
-# Endpoint triggered when a new event is published to the topic 'order'
-@app.route('/events', methods=['POST'])
-def orders_subscriber():
-    # retrieves the published order
-    order = from_http(request.headers, request.get_data())
+```csharp
+[HttpPost("/events")]
+public async Task<IActionResult> Process([FromBody] JsonDocument rawTransaction)
+{
+    var order = JsonSerializer.Deserialize<Order>(rawTransaction.RootElement.GetProperty("data").GetRawText());
 
-    # retrieves the order id and event type
-    order_id = order.data['order_id']
-    event_type = order.data['event']
+    if (order is null)
+    {
+        return BadRequest();
+    }
 
-    logging.info('%s - %s', order_id, event_type)
+    Console.WriteLine("Processing order: " + order.OrderId);
 
-    # saves the order to the state store
-    save_order(order.data['order_id'], order.data)
+    await SaveOrderToStateStore(order);
 
-    # check if the event is sent to kitchen
-    if event_type == 'Sent to kitchen':
-        # Send order to kitchen
-        time.sleep(4)
-        start_cook(order.data)
+    // check if event is sent to kitchen
+    if (order.Event == "Sent to kitchen")
+    {
+        // Start cooking
+        await Cook(order);
+    }
 
-    # check if the event is ready for delivery
-    if event_type == 'Ready for delivery':
-        # Starts a delivery
-        start_delivery(order.data)
+    if (order.Event == "Ready for delivery")
+    {
+        //start delivery
+        await Deliver(order);
+    }
 
-    return json.dumps({'success': "True"}), 200, {
-        'ContentType': 'application/json'}
+    return Ok();
+}
 ```
 
-The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, we either send the event to the kitchen or to the delivery service.
-
+The code above picks up the order from the topic, deserializes it saves it to the state store. Based on the type of event, we either send the event to the kitchen or to the delivery service.
 
 #### Running the application
 
 We now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
 ```
 
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  --resources-path ../../resources -- python3 app.py
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
 ```
 
-Finally, opena  third terminal window and navigate to the _pizza-delivery_ service. Run the command below:
+Finally, open a  third terminal window and navigate to the _pizza-delivery_ service folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3504 --resources-path ../resources  -- dotnet run
+```
+
+Check for the logs for all three services, you should now see the pubsub component loaded:
+
+```bash
+INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
 #### Testing the service
@@ -366,22 +347,25 @@ curl -H 'Content-Type: application/json' \
 Navigate to the _pizza-store_ terminal, you should see the following logs pop up with all the events being updated:
 
 ```zsh
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Sent to kitchen
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Sent to kitchen
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Cooking
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Cooking
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Ready for delivery
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Ready for delivery
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Delivery started
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Delivery started
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Order picked up by driver
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Order picked up by driver
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: En-route
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event En-route
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Nearby
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Nearby
-== APP == INFO:root:Subscription triggered for order: 93a1072c-956d-4bbf-926f-ace066a83ec2. Event: Delivered
-== APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Delivered
+== APP == Posting order: 
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Sent to kitchen
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Cooking
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Returned: OK
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Ready for delivery
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivery started
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Order picked up by driver
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event En-route
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Nearby
+== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
+== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivered
+== APP == Returned: OK
 ```
 
 ## Running the front-end application
@@ -407,23 +391,23 @@ Inside the `/python` folder, create a new file called `dapr.yaml`. Add the follo
 ```yaml
 version: 1
 common:
-  resourcesPath: ../resources
+  resourcesPath: ./resources
 apps:
-  - appDirPath: ./pizza-store/
+  - appDirPath: ./PizzaStore/
     appID: pizza-store
     daprHTTPPort: 3500
     appPort: 8001
-    command: ["python3", "app.py"]
-  - appDirPath: ./pizza-kitchen/
+    command: ["dotnet", "run"]
+  - appDirPath: ./PizzaKitchen/
     appID: pizza-kitchen
     appPort: 8002
     daprHTTPPort: 3502
-    command: ["python3", "app.py"]
-  - appDirPath: ./pizza-delivery/
+    command: ["dotnet", "run"]
+  - appDirPath: ./PizzaDelivery/
     appID: pizza-delivery
     appPort: 8003
     daprHTTPPort: 3503
-    command: ["python3", "app.py"]
+    command: ["dotnet", "run"]
 ```
 
 Stop the services, if they are running, and enter the following command in the terminal:
@@ -433,3 +417,9 @@ dapr run -f .
 ```
 
 All three services will run at the same time and log events at the same terminal window.
+
+## Congratulations
+
+Congratulations in completing all of the three challenges. Stop by our booth to show all challenges completed and get some swag for your hard work!
+
+You have now scratched the surface of what Dapr can do. It's highly recommended navigating to the [Dapr docs](https://docs.dapr.io/) and learning more about it.

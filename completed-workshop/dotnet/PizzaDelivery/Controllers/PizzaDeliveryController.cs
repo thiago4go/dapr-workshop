@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
-using System.Text.Json;
-using Microsoft.AspNetCore.Cors;
-
 
 namespace PizzaDelivery.Controllers;
 
