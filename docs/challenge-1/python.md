@@ -1,6 +1,6 @@
-## Challenge 1 - State Store
+# Challenge 1 - State Store
 
-### Overview
+## Overview
 
 On our first challenge, we will:
 
@@ -10,7 +10,15 @@ On our first challenge, we will:
 
 To learn more about the State Management Building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
 
-### Configuring the state store
+## Installing the dependencies
+
+Now navigate to `/pizza-store` and run the command below to install the dependencies:
+
+```bash
+pip install -r pizza-store/requirements.txt
+```
+
+## Configuring the state store
 
 Navigate to the `/resources` folder and create a new file called `statestore.yaml`. Add the content below to the file:
 
@@ -31,15 +39,7 @@ spec:
 
 This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state_redis` and the metadata contains host and password information for our Redis instance that was deployed as a container during Dapr's initialization. process.
 
-### Installing the dependencies
-
-Now navigate to `/pizza-store` and run the command below to install the dependencies:
-
-```bash
-pip install -r pizza-store/requirements.txt
-```
-
-### Creating the service
+## Creating the service
 
 Open `app.py`. Notice the two import lines, let's add a couple more libraries there:
 
@@ -55,7 +55,7 @@ import json
 
 We are now importing _DaprClient_ from _dapr.clients_. That's what we will use to manage the state in our Redis instance.
 
-#### Managing state
+## Managing state
 
 Let's create three new functions: `save_order`, `get_order`, and `delete_order`.
 
@@ -101,7 +101,7 @@ def delete_order(order_id):
 
 3. `client.delete_state(DAPR_STORE_NAME, order_id)` deletes the state from the store. It also requires a key and the state store name.
 
-### Creating the app routes
+## Creating the app routes
 
 Before testing our application, we need to create routes so we are able to manage our state store from the frontend and by calling the REST APIs directly. Add three new routes below **# Application routes #**:
 
@@ -152,7 +152,7 @@ def deleteOrder(order_id):
 
 To save the event we generate a new order UUID and set a new event: _Sent to Kitchen_. We will use these events during the next challenges.
 
-### Running the application
+## Running the application
 
 Now, open a terminal and navigate to the folder where `app.py` is located. Run the following command:
 
@@ -175,9 +175,9 @@ Look for the log entry below to guarantee that the state store was loaded succes
 INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
-### Testing the service
+## Testing the service
 
-#### Create an order
+### Create an order
 
 Open `PizzaStore.rest` and place a new order by clicking the button `Send request` under _#Place a new order_:
 
@@ -187,7 +187,7 @@ Copy the value of the `order id` returned and replace the value on `@order-id = 
 
 To retrieve and delete the order, run the corresponding requests.
 
-#### Alternatively, you can use _cURL_ to call the endpoints:**
+### Alternatively, you can use _cURL_ to call the endpoints:**
 
 Run the command below to create a new order.
 
