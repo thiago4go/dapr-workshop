@@ -33,7 +33,7 @@ This is a component definition file named `pizzastatestore`. In the _spec_ defin
 
 ### Installing the dependencies
 
-Now navigate to `python/pizza-store`. This folder contains the `app.py` file which contains our application. Before start coding, let's install our dependencies.
+Now navigate to `/pizza-store`. This folder contains the `app.py` file which contains our application. Before start coding, let's install our dependencies.
 
 Let's start by creating a new file called `requirements.txt`. This file will hold our dependencies. Add the content below to it:
 
