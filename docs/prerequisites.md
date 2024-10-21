@@ -48,7 +48,7 @@ docker ps
 
 ### Integrated terminal 
 
-During the workshop, you should be working in 1 instance of VS Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro using an integrated terminal.
+During the workshop, you should be working with Visual Studio Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro using an integrated terminal.
 
 ### Prevent port collisions
 
