@@ -5,7 +5,7 @@
 
 Welcome to Diagrid's [Dapr](https://dapr.io/) Workshop! Our goal is for you to familiarize with Dapr's most popular APIs and give you a starting point so you can start building your own distributed applications right away!
 
-Microservices are popular for multiple reasons. They can be written in any programming language and can be small enough to perform simple and easy to execute tasks. Because of that, your solution can end up with hundreds of them, all over the place. And this where all the problems begin: security, observability, resiliency become challenges that are no easy to overcome, and that's where Dapr comes in.
+Microservices are popular for multiple reasons. They can be written in any programming language and can be small enough to perform simple and easy to execute tasks. Because of that, your solution can end up with hundreds of them, all over the place; and this where all the problems begin: security, observability, and resiliency become challenges that are no easy to overcome. That's where Dapr comes in.
 
 ## Goals
 
