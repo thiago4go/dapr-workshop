@@ -187,7 +187,7 @@ Copy the value of the `order id` returned and replace the value on `@order-id = 
 
 To retrieve and delete the order, run the corresponding requests.
 
-### Alternatively, you can use _cURL_ to call the endpoints:**
+#### Alternatively, you can use _cURL_ to call the endpoints
 
 Run the command below to create a new order.
 
