@@ -11,19 +11,7 @@ To learn more about the Service Invocation building block, refer to the [Dapr do
 
 ### Installing the dependencies
 
-Navigate to `python/pizza-kitchen`. Let's install our dependencies
-
-Open the file called `requirements.txt`. Add the content below to it:
-
-```text
-Flask
-dapr
-cloudevents
-uvicorn
-typing-extensions
-```
-
-Run the command below to install the dependencies:
+Navigate to `/pizza-kitchen` and run the command below to install the dependencies:
 
 ```bash
 pip install -r requirements.txt
