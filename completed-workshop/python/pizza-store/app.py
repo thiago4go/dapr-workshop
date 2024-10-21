@@ -14,7 +14,7 @@ DAPR_STORE_NAME = 'pizzastatestore'
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 
-DAPR_PORT = 6000
+DAPR_PORT = 8001
 
 logging.basicConfig(level=logging.INFO)
 
@@ -170,4 +170,4 @@ def deleteOrder(order_id):
         'ContentType': 'application/json'}
 
 
-app.run(port=6000)
+app.run(port=8001)

@@ -56,9 +56,9 @@ During the workshop you will run the services in the solution on your local mach
 
 | Service                    | Application Port | Dapr sidecar HTTP port  |
 |----------------------------|------------------|------------------------|
-| pizza-store      | 6000             | 3501                   |
-| pizza-kitchen      | 6001             | 3502                  |
-| pizza-delivery | 6002             | 3503               |
+| pizza-store      | 8001             | 3501                   |
+| pizza-kitchen      | 8002             | 3502                  |
+| pizza-delivery | 8003             | 3503               |
 
 If you're on Windows with Hyper-V enabled, you might run into an issue that you're not able to use one (or more) of these ports. This could have something to do with aggressive port reservations by Hyper-V. You can check whether or not this is the case by executing this command:
 
@@ -70,7 +70,7 @@ If you see one (or more) of the ports shown as reserved in the output, fix it by
 
 ```powershell
 dism.exe /Online /Disable-Feature:Microsoft-Hyper-V
-netsh int ipv4 add excludedportrange protocol=tcp startport=6000 numberofports=3
+netsh int ipv4 add excludedportrange protocol=tcp startport=8001 numberofports=3
 netsh int ipv4 add excludedportrange protocol=tcp startport=3501 numberofports=3
 dism.exe /Online /Enable-Feature:Microsoft-Hyper-V /All
 ```

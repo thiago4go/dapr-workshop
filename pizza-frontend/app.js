@@ -21,7 +21,7 @@ function subscribeToEvents() {
 function fetchEvents() {
     if (currentOrder != ""){
         if (currentEvent != "Delivered") {
-            fetch("http://127.0.0.1:6000/orders/" + currentOrder, {
+            fetch("http://127.0.0.1:8001/orders/" + currentOrder, {
                 method: 'GET',
             })
             .then(response => response.json())
@@ -73,7 +73,7 @@ function placeOrder() {
 
     console.log("Order placed successfully");
 
-    fetch("http://127.0.0.1:6000/orders", {
+    fetch("http://127.0.0.1:8001/orders", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -152,13 +152,13 @@ print('result: ' + str(result), flush=True)
 We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
 ```
 
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-port 3502  -- python3 app.py
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  -- python3 app.py
 ```
 
 > [!IMPORTANT]
@@ -172,7 +172,7 @@ Open a third terminal window and create a new order:
 curl -H 'Content-Type: application/json' \
     -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
     -X POST \
-    http://localhost:6000/orders
+    http://localhost:8001/orders
 ```
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:

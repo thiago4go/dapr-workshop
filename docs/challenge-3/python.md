@@ -324,19 +324,19 @@ The code above picks up the order from the topic, checks for the `order_id` and 
 We now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
 ```
 
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-port 3502  --resources-path ../../resources -- python3 app.py
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  --resources-path ../../resources -- python3 app.py
 ```
 
 Finally, opena  third terminal window and navigate to the _pizza-delivery_ service. Run the command below:
 
 ```bash
-dapr run --app-id pizza-delivery --app-protocol http --app-port 6002 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
 ```
 
 > [!IMPORTANT]
@@ -356,7 +356,7 @@ Open a fourth terminal window and create a new order:
 curl -H 'Content-Type: application/json' \
     -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
     -X POST \
-    http://localhost:6000/orders
+    http://localhost:8001/orders
 ```
 
 Navigate to the _pizza-store_ terminal, you should see the following logs pop up with all the events being updated:
@@ -410,16 +410,16 @@ apps:
   - appDirPath: ./pizza-store/
     appID: pizza-store
     daprHTTPPort: 3501
-    appPort: 6000
+    appPort: 8001
     command: ["python3", "app.py"]
   - appDirPath: ./pizza-kitchen/
     appID: pizza-kitchen
-    appPort: 6001
+    appPort: 8002
     daprHTTPPort: 3502
     command: ["python3", "app.py"]
   - appDirPath: ./pizza-delivery/
     appID: pizza-delivery
-    appPort: 6002
+    appPort: 8003
     daprHTTPPort: 3503
     command: ["python3", "app.py"]
 ```

@@ -7,15 +7,15 @@ apps:
   - appDirPath: ./pizza-store/
     appID: pizza-store
     daprHTTPPort: 3501
-    appPort: 6000
+    appPort: 8001
     command: ["python3", "app.py"]
   - appDirPath: ./pizza-kitchen/
     appID: pizza-kitchen
-    appPort: 6001
+    appPort: 8002
     daprHTTPPort: 3502
     command: ["python3", "app.py"]
   - appDirPath: ./pizza-delivery/
     appID: pizza-delivery
-    appPort: 6002
+    appPort: 8003
     daprHTTPPort: 3503
     command: ["python3", "app.py"]

@@ -7,15 +7,15 @@ apps:
   - appDirPath: ./PizzaStore/
     appID: pizza-store
     daprHTTPPort: 3501
-    appPort: 6000
+    appPort: 8001
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaKitchen/
     appID: pizza-kitchen
-    appPort: 6001
+    appPort: 8002
     daprHTTPPort: 3502
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaDelivery/
     appID: pizza-delivery
-    appPort: 6002
+    appPort: 8003
     daprHTTPPort: 3503
     command: ["dotnet", "run"]

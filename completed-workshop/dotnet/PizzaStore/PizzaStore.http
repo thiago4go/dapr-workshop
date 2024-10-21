@@ -1,5 +1,5 @@
 ### Place orders
-@pizza-store = localhost:6000
+@pizza-store = localhost:8001
 
 ### Place a new order
 POST http://{{pizza-store}}/orders 

@@ -168,7 +168,7 @@ To save the event we generate a new order UUID and set a new event: _Sent to Kit
 Now, open a terminal and navigate to the folder where `app.py` is located. Run the following command:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
 > [!IMPORTANT]
@@ -177,7 +177,7 @@ dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-po
 This command sets:
     - an app-id `pizza-store` to our application
     - the app-protocol `http`
-    - an  app-port `6000` for external communication and and http-port `3501` for sidecar communication
+    - an  app-port `8001` for external communication and and http-port `3501` for sidecar communication
     - the resources-path, where our state store component definition file is locatated. This will guarantee that our component is loaded once the app initializes.
 
 Look for the log entry below to guarantee that the state store was loaded successfully:
@@ -206,7 +206,7 @@ Run the command below to create a new order.
 curl -H 'Content-Type: application/json' \
     -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
     -X POST \
-    http://localhost:6000/orders
+    http://localhost:8001/orders
 ```
 
 If you downloaded Redis Insight, you can visualize the new entry there:
@@ -218,7 +218,7 @@ Take note of the new order-id generated and run the following command to get the
 ```bash
 curl -H 'Content-Type: application/json' \
     -X GET \
-    http://localhost:6000/orders/<order-id>
+    http://localhost:8001/orders/<order-id>
 ```
 
 Finally, to delete the order:
@@ -226,5 +226,5 @@ Finally, to delete the order:
 ```bash
 curl -H 'Content-Type: application/json' \
     -X DELETE \
-    http://localhost:6000/orders/<order-id>
+    http://localhost:8001/orders/<order-id>
 ```
