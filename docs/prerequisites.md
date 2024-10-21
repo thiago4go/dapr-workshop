@@ -28,15 +28,15 @@
 
 ## Install Dapr
 
-1 - Follow [these steps](https://docs.dapr.io/getting-started/install-dapr-cli/) to install the Dapr CLI.
+1. Follow [these steps](https://docs.dapr.io/getting-started/install-dapr-cli/) to install the Dapr CLI.
 
-2 - [Initialize Dapr](https://docs.dapr.io/getting-started/install-dapr-cli/):
+2. [Initialize Dapr](https://docs.dapr.io/getting-started/install-dapr-cli/):
 
 ```bash
 dapr init
 ```
 
-3 - Verify is local containers are running:
+3. Verify if local containers are running:
 
 ```bash
 docker ps
@@ -44,7 +44,9 @@ docker ps
 
 ![containers](./../imgs/docker-ps.png)
 
-## Integrated terminal
+## Some considerations
+
+### Integrated terminal 
 
 During the workshop, you should be working in 1 instance of VS Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro using an integrated terminal.
 
