@@ -33,19 +33,7 @@ This is a component definition file named `pizzastatestore`. In the _spec_ defin
 
 ### Installing the dependencies
 
-Now navigate to `/pizza-store`. This folder contains the `app.py` file which contains our application. Before start coding, let's install our dependencies.
-
-Let's start by creating a new file called `requirements.txt`. This file will hold our dependencies. Add the content below to it:
-
-```text
-Flask
-flask-cors
-dapr
-uvicorn
-typing-extensions
-```
-
-Run the command below to install the dependencies:
+Now navigate to `/pizza-store` and run the command below to install the dependencies:
 
 ```bash
 pip install -r pizza-store/requirements.txt
