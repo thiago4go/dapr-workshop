@@ -220,4 +220,4 @@ curl -H 'Content-Type: application/json' \
 
 ## Next
 
-Let's create a new service to help us cook the pizza to our customers. On the enxt challenge, you will learn how to create a new endpoint and how to invoke it using Dapr. When you are ready, move to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!
+Let's create a new service to help us cook the pizza to our customers. On the next challenge, you will learn how to create a new endpoint and how to invoke it using Dapr. When you are ready, move to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!
