@@ -131,9 +131,6 @@ We now need to run both applications. If the _pizza-store_ service is still runn
 dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
-> [!IMPORTANT]
-> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
-
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
