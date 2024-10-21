@@ -33,7 +33,6 @@ cd PizzaDelivery
 dotnet add package Dapr.Client
 ```
 
-
 ## Create the Pub/Sub component
 
 Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
