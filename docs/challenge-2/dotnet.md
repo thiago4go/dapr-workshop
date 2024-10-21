@@ -1,6 +1,6 @@
-## Challenge 2 - Service Invocation
+# Challenge 2 - Service Invocation
 
-### Overview
+## Overview
 
 On our second challenge, we will send the order created in the previous step to the kitchen! For that, we will:
 
@@ -9,7 +9,7 @@ On our second challenge, we will send the order created in the previous step to 
 
 To learn more about the Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
 
-### Installing the dependencies
+## Installing the dependencies
 
 Navigate to `/PizzaKitchen`. Before start coding, let's install our Dapr dependencies.
 
@@ -18,7 +18,7 @@ cd PizzaKitchen
 dotnet add package Dapr.Client
 ```
 
-### Creating the service
+## Creating the service
 
 Open `/Controllers/PizzaKitchenController.cs` Let's add a couple of import statements.
 
@@ -27,7 +27,7 @@ using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 ```
 
-### Creating the app route
+## Creating the app route
 
 Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
 
@@ -80,7 +80,7 @@ private async Task ReadyForDelivery(Order order)
 }
 ```
 
-#### Calling the app route
+## Calling the app route
 
 Let's go back to the _pizza-store_ service. We will create a Service Invocation action to call the `/cook` endpoint from our _pizza-kitchen_ service.
 
@@ -123,7 +123,7 @@ var response = await client.PostAsJsonAsync("/cook", order, cancellationToken: C
 
 With this, services only need to communicate to sidecars through localhost and the sidecar handles the discovery capabilities.
 
-#### Running the application
+## Running the application
 
 We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
@@ -140,7 +140,7 @@ dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
 
-#### Testing the service
+## Testing the service
 
 Open `PizzaStore.rest` and create a new order, similar to what was done on ourfirst challenge.
 
