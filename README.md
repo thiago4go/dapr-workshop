@@ -27,13 +27,13 @@ We will start the workshop by creating our first service: Pizza Order! This serv
 
 ### Challenge 2 - Service Invocation
 
-Now that you learned the basics, let's jump to another popular API: Service Invocation. After the order is saved, we will create another service that is responsible for cooking the pizza for us - Pizza Kitchen! 
+Now that you learned the basics, let's jump to another popular API: Service Invocation. After the order is saved, we will create another service that is responsible for cooking the pizza for us - Pizza Kitchen! This service will have an endpoint that will be called from our Pizza Store service.
 
 ![challenge-2](/imgs/challenge-2.png)
 
 ### Challenge 3 - Pub/Sub
 
-Then, we will learn how to leverage Dapr's Pub/Sub API to publish events to Redis from ordering the pizza, to cooking and delivering it. We will also subscribe to these events and updating them in the UI.
+Finally, we will create our third service: Pizza Delivery! We will add the Pub/Sub Dapr API to our services to publish events to Redis (our Pub/Sub component). These events include all steps necessary ion a pizza ordering and delivering process. On each event published, our Pizza Store will subscribe and save the current state of the order to Redis.
 
 ![challenge-3](/imgs/challenge-3.png)
 
