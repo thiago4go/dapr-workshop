@@ -6,6 +6,7 @@
 - [Visual Studio Code](https://code.visualstudio.com/download)
 - [REST Client for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
 - [Redis Insights](https://redis.io/insight/) Optional: to visualize the data on Redis.
+- [Powershell(for Windows users)](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4)
 
 <details>
 
@@ -43,23 +44,13 @@ docker ps
 
 ![containers](./../imgs/docker-ps.png)
 
-### Instructions
+## Integrated terminal
 
-Every assignment is contained in a separate folder in this repo. Each folder contains the description of the assignment that you can follow.
+During the workshop, you should be working in 1 instance of VS Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro using an integrated terminal.
 
-**It is important you work through all the assignments in order and don't skip any assignments. The instructions for each assignment rely on the fact that you have finished the previous assignments successfully.**
+### Prevent port collisions
 
-You will be provided with a starting point for the workshop. This starting point is a working version of application in which the services use plain HTTP to communicate with each-other and state is stored in memory. With each assignment of the workshop, you will add a Dapr building block to the solution.
-
-Every assignment offers instructions on how to complete the assignment. With the exception of assignment 1, each assignment offers two versions of the instructions: the **DIY** version and the **step-by-step** version. The DIY version just states the outcome you need to achieve and no further instructions. It's entirely up to you to achieve the goals with the help of the Dapr documentation. The step-by-step version describes exactly what you need to change in the application step-by-step. It's up to you to pick an approach. If you pick the DIY approach and get stuck, you can always go to the step-by-step instructions for some help.
-
-#### Integrated terminal
-
-During the workshop, you should be working in 1 instance of VS Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Windows machine with the integrated Powershell terminal in VS Code. If you have any issues with the commands on Linux or Mac, please create an issue or a PR to add the appropriate command.
-
-#### Prevent port collisions
-
-During the workshop you will run the services in the solution on your local machine. To prevent port-collisions, all services listen on a different HTTP port. When running the services with Dapr, you need additional ports for HTTP and gRPC communication with the sidecars. By default these ports are `3501` and `50001`. But to prevent confusion, you'll use totally different port numbers in the assignments. If you follow the instructions, the services will use the following ports for their Dapr sidecars to prevent port collisions:
+During the workshop you will run the services in the solution on your local machine. To prevent port-collisions, all services listen on a different HTTP port. When running the services with Dapr, you need additional ports for HTTP and gRPC communication with the sidecars. If you follow the instructions, the services will use the following ports for their Dapr sidecars to prevent port collisions:
 
 | Service                    | Application Port | Dapr sidecar HTTP port  |
 |----------------------------|------------------|------------------------|
@@ -82,7 +73,7 @@ netsh int ipv4 add excludedportrange protocol=tcp startport=3501 numberofports=3
 dism.exe /Online /Enable-Feature:Microsoft-Hyper-V /All
 ```
 
-#### Running self-hosted on MacOS with Antivirus software
+### Running self-hosted on MacOS with Antivirus software
 
 Some antivirus software blocks mDNS (we've actually encountered this with Sophos). mDNS is used for name-resolution by Dapr when running in self-hosted mode. Blocking mDNS will cause issues with service invocation. When you encounter any errors when invoking services using service invocation, use Consul as an alternative name resolution service.
 
@@ -101,7 +92,7 @@ docker rm dtc-consul -f
 You can verify whether Consul is used for name-resolution by searching for the occurrence of the following line in the Dapr logging:
 
 ```bash
-ℹ️  Starting Dapr with id vehicleregistrationservice. HTTP Port: 3602. gRPC Port: 60002
+ℹ️  Starting Dapr with id pizza-kitchen. HTTP Port: 3502.
 ...
 INFO[0000] Initialized name resolution to consul ...
 ...

@@ -1,6 +1,7 @@
 version: 1
 common:
   resourcesPath: ./resources
+  configFilePath: ./resources/config/config.yaml
 apps:
   - appDirPath: ./PizzaStore/
     appID: pizza-store
