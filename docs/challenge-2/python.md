@@ -192,4 +192,6 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 == APP == INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 20:48:48] "POST /cook HTTP/1.1" 200 -
 ```
 
-You may have noticed that we are updating the event information on every new steo we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: **Pub/Sub**!
+## Next
+
+You may have noticed that we are updating the event information on every new steo we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/python.md)!
