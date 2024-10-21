@@ -142,7 +142,7 @@ dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-
 
 ## Testing the service
 
-Open `PizzaStore.rest` and create a new order, similar to what was done on ourfirst challenge.
+Open `PizzaStore.rest` and create a new order, similar to what was done on our first challenge.
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
 
@@ -152,7 +152,7 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 == APP == Order ready for delivery: 1393ff15-10fa-4a71-ad23-851157f9f748
 ```
 
-Alternatively, open a third terminal window and create a new order:
+### Alternatively, open a third terminal window and create a new order:
 
 ```bash
 curl -H 'Content-Type: application/json' \
