@@ -68,19 +68,7 @@ As a Dapr good practice, we are also introducing a _scope_ to this definition fi
 
 ### Installing the dependencies
 
-Navigate to `/pizza-delivery`. Let's install our dependencies
-
-Open the file called `requirements.txt`. Add the content below to it:
-
-```text
-Flask
-dapr
-cloudevents
-uvicorn
-typing-extensions
-```
-
-Run the command below to install the dependencies:
+Navigate to `/pizza-delivery`. and run the command below to install the dependencies:
 
 ```bash
 pip install -r requirements.txt
