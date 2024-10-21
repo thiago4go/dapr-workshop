@@ -1,5 +1,0 @@
-Flask
-flask-cors
-dapr
-uvicorn
-typing-extensions
