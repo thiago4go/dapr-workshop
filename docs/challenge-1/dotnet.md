@@ -179,7 +179,7 @@ INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-stor
 
 #### Create an order
 
-Open `PizzaStore.rest` and place a new order by clicking the button `Send request` under _#Place a new order_:
+Open `PizzaStore.rest` and place a new order by clicking the button `Send request` under _Place a new order_:
 
 ![send-request](/imgs/rest-request.png)
 
