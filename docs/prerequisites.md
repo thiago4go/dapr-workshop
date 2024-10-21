@@ -19,7 +19,7 @@
 
 <details>
 
-<summary>dotnet</summary>
+<summary>.NET</summary>
 
 - [dotnet 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [C# Extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp)
@@ -132,7 +132,7 @@ source env/bin/activate
 
 <details>
   
-<summary>dotnet</summary>
+<summary>.NET</summary>
 
 On your terminal, run:
 
@@ -148,4 +148,4 @@ cd dapr-worksop-csharp
 Pick your programming language:
 
 - [Python](/docs/challenge-1/python.md)
-- [dotnet](/docs/challenge-1/dotnet.md)
+- [.NET](/docs/challenge-1/dotnet.md)
