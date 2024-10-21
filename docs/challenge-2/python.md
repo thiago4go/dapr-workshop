@@ -194,4 +194,4 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 
 ## Next
 
-You may have noticed that we are updating the event information on every new steo we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/python.md)!
+You may have noticed that we are updating the event information on every new step we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/python.md)!
