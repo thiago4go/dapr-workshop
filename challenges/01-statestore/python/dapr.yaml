@@ -4,6 +4,6 @@ common:
 apps:
   - appDirPath: ./pizza-store/
     appID: pizza-store
-    daprHTTPPort: 3500
-    appPort: 8001
+    daprHTTPPort: 3501
+    appPort: 6000
     command: ["python3", "app.py"]

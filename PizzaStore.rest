@@ -1,5 +1,4 @@
-### Place orders
-@pizza-store = localhost:8001
+@pizza-store = localhost:6000
 @order-id = 7adb27dd-53c3-4f20-be7f-591e155c9f07
 
 ### Place a new order

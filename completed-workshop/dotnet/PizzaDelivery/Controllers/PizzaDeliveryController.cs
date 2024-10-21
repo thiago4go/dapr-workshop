@@ -81,4 +81,4 @@ public class PizzaDeliveryController : ControllerBase
 }
 
 
-// dapr run --app-id pizza-delivery --app-protocol http --app-port 5058 --dapr-http-port 3504 --resources-path ../resources  -- dotnet run
+// dapr run --app-id pizza-delivery --app-protocol http --app-port 5058 --dapr-http-port 3503 --resources-path ../resources  -- dotnet run

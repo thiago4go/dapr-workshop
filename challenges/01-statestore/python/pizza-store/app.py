@@ -7,7 +7,7 @@ import logging
 import json
 
 DAPR_STORE_NAME = 'pizzastatestore'
-DAPR_PORT = 8001
+DAPR_PORT = 6000
 
 logging.basicConfig(level=logging.INFO)
 
@@ -92,4 +92,4 @@ def deleteOrder(order_id):
         'ContentType': 'application/json'}
 
 
-app.run(port=8001)
+app.run(port=6000)

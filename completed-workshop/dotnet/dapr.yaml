@@ -4,16 +4,16 @@ common:
 apps:
   - appDirPath: ./PizzaStore/
     appID: pizza-store
-    daprHTTPPort: 3500
-    appPort: 8001
+    daprHTTPPort: 3501
+    appPort: 6000
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaKitchen/
     appID: pizza-kitchen
-    appPort: 8002
+    appPort: 6001
     daprHTTPPort: 3502
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaDelivery/
     appID: pizza-delivery
-    appPort: 8003
+    appPort: 6003
     daprHTTPPort: 3503
     command: ["dotnet", "run"]

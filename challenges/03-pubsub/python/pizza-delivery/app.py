@@ -9,7 +9,7 @@ import logging
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 
-DAPR_PORT = 8003
+DAPR_PORT = 6003
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,4 +61,4 @@ def deliver(order_data):
     order_data['event'] = 'Delivered'
     publish_event(order_data)
 
-app.run(port=8003)
+app.run(port=6003)

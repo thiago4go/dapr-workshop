@@ -5,7 +5,7 @@ import logging
 from dapr.clients import DaprClient
 import random
 
-DAPR_PORT = 8002
+DAPR_PORT = 6001
 
 logging.basicConfig(level=logging.INFO)
 
@@ -51,4 +51,4 @@ def startCooking():
     return json.dumps({'success': True}), 200, {
         'ContentType': 'application/json'}
 
-app.run(port=8002)
+app.run(port=6001)

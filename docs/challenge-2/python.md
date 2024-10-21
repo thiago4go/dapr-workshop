@@ -104,7 +104,7 @@ Now, under **# Dapr Service Invocation #**, add the code below:
 def start_cook(order_data):
     # Set base url
     base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
-                    'DAPR_HTTP_PORT', '3500')
+                    'DAPR_HTTP_PORT', '3501')
     
     # Adding pizza-kitchen's app id as part of the header
     headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
@@ -126,10 +126,10 @@ Let's break down the code above.
 1. First we are setting the base URL:
 
 ```python
-base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3500')
+base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3501')
 ```
 
-Notice that the code above calls a URL with the host `localhost` with the port `3500`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+Notice that the code above calls a URL with the host `localhost` with the port `3501`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
@@ -164,13 +164,13 @@ print('result: ' + str(result), flush=True)
 We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
 ```
 
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  -- python3 app.py
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-port 3502  -- python3 app.py
 ```
 
 #### Testing the service
@@ -181,7 +181,7 @@ Open a third terminal window and create a new order:
 curl -H 'Content-Type: application/json' \
     -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
     -X POST \
-    http://localhost:8001/orders
+    http://localhost:6000/orders
 ```
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:

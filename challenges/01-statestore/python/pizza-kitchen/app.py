@@ -1,7 +1,7 @@
 from flask import Flask
 import logging
 
-DAPR_PORT = 8002
+DAPR_PORT = 6001
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,4 +12,4 @@ app = Flask(__name__)
 
 # ------------------- Application routes ------------------- #
 
-app.run(port=8002)
+app.run(port=6001)

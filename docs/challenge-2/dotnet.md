@@ -111,7 +111,7 @@ Let's break down the code above.
 var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-kitchen");
 ```
 
-The code above wraps an http call to the host `localhost` with the port `3500`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+The code above wraps an http call to the host `localhost` with the port `3501`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
@@ -128,25 +128,18 @@ With this, services only need to communicate to sidecars through localhost and t
 We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3500 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
 ```
 
 #### Testing the service
 
-Open a third terminal window and create a new order:
-
-```bash
-curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
-    -X POST \
-    http://localhost:8001/orders
-```
+Open `PizzaStore.rest` and create a new order, similar to what was done on ourfirst challenge.
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
 
@@ -156,6 +149,11 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 == APP == Order ready for delivery: 1393ff15-10fa-4a71-ad23-851157f9f748
 ```
 
-TODO: Add information about VPNs and Firewalls
+Alternatively, open a third terminal window and create a new order:
 
-You may have noticed that we are updating the event information on every new steo we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: **Pub/Sub**!
+```bash
+curl -H 'Content-Type: application/json' \
+    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -X POST \
+    http://localhost:6000/orders
+```

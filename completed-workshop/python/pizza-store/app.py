@@ -14,7 +14,7 @@ DAPR_STORE_NAME = 'pizzastatestore'
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 
-DAPR_PORT = 8001
+DAPR_PORT = 6000
 
 logging.basicConfig(level=logging.INFO)
 
@@ -52,7 +52,7 @@ def delete_order(order_id):
 def start_cook(order_data):
     # Set base url
     base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
-                    'DAPR_HTTP_PORT', '3500')
+                    'DAPR_HTTP_PORT', '3501')
     
     # Adding pizza-kitchen's app id as part of the header
     headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
@@ -69,7 +69,7 @@ def start_cook(order_data):
     print('result: ' + str(result), flush=True)
 
 def start_delivery(order_data):
-    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3500')
+    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3501')
 
     # Adding app id as part of the header
     headers = {'dapr-app-id': 'pizza-delivery', 'content-type': 'application/json'}
@@ -170,4 +170,4 @@ def deleteOrder(order_id):
         'ContentType': 'application/json'}
 
 
-app.run(port=8001)
+app.run(port=6000)

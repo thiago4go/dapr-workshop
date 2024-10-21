@@ -11,7 +11,7 @@
             "request": "launch",
             "mainClass": "${file}",
             "env": {
-                "DAPR_HTTP_ENDPOINT": "http://localhost:3500/",
+                "DAPR_HTTP_ENDPOINT": "http://localhost:3501/",
                 "DAPR_GRPC_ENDPOINT": "http://localhost:50001/"
             }
         },
@@ -50,7 +50,7 @@
             "mainClass": "io.diagrid.dapr.PizzaStore",
             "projectName": "pizza-store",
             "env": {
-                "DAPR_HTTP_ENDPOINT": "http://localhost:3500",
+                "DAPR_HTTP_ENDPOINT": "http://localhost:3501",
                 "DAPR_GRPC_ENDPOINT": "http://localhost:50001"
             }
         },
