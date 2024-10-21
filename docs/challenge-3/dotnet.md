@@ -315,17 +315,26 @@ We now need to run all three applications. If the _pizza-store_ and the _pizza-k
 dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
+
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
 ```
 
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
+
 Finally, open a  third terminal window and navigate to the _pizza-delivery_ service folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-delivery --app-protocol http --app-port 6003 --dapr-http-port 3503 --resources-path ../resources  -- dotnet run
 ```
+
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
 
 Check for the logs for all three services, you should now see the pubsub component loaded:
 
@@ -386,12 +395,14 @@ Open a browser window and navigate to `localhost:8080`, fill-out your order on t
 
 Instead of opening multiple terminals to run the services, we can take advantage of a great Dapr feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/).
 
-Inside the `/python` folder, create a new file called `dapr.yaml`. Add the following content to it:
+On the parent folder, create a new file called `dapr.yaml`. Add the following content to it:
 
 ```yaml
 version: 1
 common:
   resourcesPath: ./resources
+  # Uncomment the following line if you are running Consul for service naming resolution
+  # configFilePath: ./resources/config/config.yaml
 apps:
   - appDirPath: ./PizzaStore/
     appID: pizza-store

@@ -172,6 +172,9 @@ Now, open a terminal and navigate to the folder where `app.py` is located. Run t
 dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
 ```
 
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
+
 This command sets:
     - an app-id `pizza-store` to our application
     - the app-protocol `http`

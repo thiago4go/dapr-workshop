@@ -1,6 +1,8 @@
 version: 1
 common:
   resourcesPath: ../resources
+  # Uncomment the following line if you are running Consul for service naming resolution
+  # configFilePath: ./resources/config/config.yaml
 apps:
   - appDirPath: ./pizza-store/
     appID: pizza-store

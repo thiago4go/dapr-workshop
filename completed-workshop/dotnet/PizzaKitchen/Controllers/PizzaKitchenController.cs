@@ -87,4 +87,3 @@ public class PizzaKitchenController : ControllerBase
 }
 
 
-// dapr run --app-id pizza-kitchen --app-protocol http --app-port 5007 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run

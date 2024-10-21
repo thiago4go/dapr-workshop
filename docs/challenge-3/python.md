@@ -339,17 +339,26 @@ We now need to run all three applications. If the _pizza-store_ and the _pizza-k
 dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
 ```
 
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
+
 Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-port 3502  --resources-path ../../resources -- python3 app.py
 ```
 
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
+
 Finally, opena  third terminal window and navigate to the _pizza-delivery_ service. Run the command below:
 
 ```bash
 dapr run --app-id pizza-delivery --app-protocol http --app-port 6003 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
 ```
+
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
 Check for the logs for all three services, you should now see the pubsub component loaded:
 
@@ -413,6 +422,8 @@ Inside the `/python` folder, create a new file called `dapr.yaml`. Add the follo
 version: 1
 common:
   resourcesPath: ../resources
+  # Uncomment the following line if you are running Consul for service naming resolution
+  # configFilePath: ./resources/config/config.yaml
 apps:
   - appDirPath: ./pizza-store/
     appID: pizza-store

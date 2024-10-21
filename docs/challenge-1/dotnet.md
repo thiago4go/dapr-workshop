@@ -171,6 +171,9 @@ Now, open a terminal and navigate to the folder where `app.py` is located. Run t
 dapr run --app-id pizza-store --app-protocol http --app-port 6000 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
+> [!IMPORTANT]
+> If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
+
 This command sets:
     - an app-id `pizza-store` to our application
     - the app-protocol `http`
