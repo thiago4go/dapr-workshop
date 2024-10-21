@@ -1,6 +1,6 @@
-## Challenge 2 - Service Invocation
+# Challenge 2 - Service Invocation
 
-### Overview
+## Overview
 
 On our second challenge, we will send the order created in the previous step to the kitchen! For that, we will:
 
@@ -17,7 +17,7 @@ Navigate to `/pizza-kitchen` and run the command below to install the dependenci
 pip install -r requirements.txt
 ```
 
-### Creating the service
+## Creating the service
 
 Open `app.py`. Add the import statements below:
 
@@ -31,7 +31,7 @@ import logging
 import random
 ```
 
-### Creating the app route
+## Creating the app route
 
 Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
 
@@ -75,7 +75,7 @@ def ready(order_data):
     return order_data
 ```
 
-#### Calling the app route
+## Calling the app route
 
 Let's go back to the _pizza-store_ service. We will create a Service Invocation action to call the `/cook` endpoint from our _pizza-kitchen_ service.
 
@@ -147,7 +147,7 @@ result = requests.post(
 print('result: ' + str(result), flush=True)
 ```
 
-#### Running the application
+## Running the application
 
 We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
@@ -164,7 +164,15 @@ dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
-#### Testing the service
+## Testing the service
+
+### Create an order
+
+Open `PizzaStore.rest` and place a new order by clicking the button `Send request` under _Place a new order_:
+
+![send-request](/imgs/rest-request.png)
+
+### Alternatively, open a third terminal window and create a new order:
 
 Open a third terminal window and create a new order:
 
@@ -183,7 +191,5 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 == APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 is ready for delivery!
 == APP == INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 20:48:48] "POST /cook HTTP/1.1" 200 -
 ```
-
-TODO: Add information about VPNs and Firewalls
 
 You may have noticed that we are updating the event information on every new steo we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: **Pub/Sub**!
