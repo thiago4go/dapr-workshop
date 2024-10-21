@@ -161,5 +161,6 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders
 ```
 
+## Next
 
-You may have noticed that we are updating the event information on every new steo we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: **Pub/Sub**!
+You may have noticed that we are updating the event information on every new step we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/dotnet.md)!
