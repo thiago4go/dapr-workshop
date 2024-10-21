@@ -75,7 +75,7 @@ netsh int ipv4 add excludedportrange protocol=tcp startport=3501 numberofports=3
 dism.exe /Online /Enable-Feature:Microsoft-Hyper-V /All
 ```
 
-### Running self-hosted on MacOS with Antivirus software
+### Running self-hosted on MacOS with VPN/Firewalls enabled
 
 Some antivirus software blocks mDNS (we've actually encountered this with Sophos). mDNS is used for name-resolution by Dapr when running in self-hosted mode. Blocking mDNS will cause issues with service invocation. When you encounter any errors when invoking services using service invocation, use Consul as an alternative name resolution service.
 
