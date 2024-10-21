@@ -1,6 +1,6 @@
-## Challenge 3 - Pub/Sub
+# Challenge 3 - Pub/Sub
 
-### Overview
+## Overview
 
 On our third challenge, our goal will be to update the state store with all the events from our order. For that, we will:
 
@@ -24,7 +24,7 @@ Delivered
 
 To learn more about the Publish & subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
-### Create the Pub/Sub component
+## Create the Pub/Sub component
 
 Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
 
@@ -45,7 +45,7 @@ spec:
 
 Similar to our `statestore.yaml` file, this new definition creates a new component called _pizzapubsub_ of type _pubsub.redis_ pointing to our local Redis instance. Our apps will initialize this component to interact with it.
 
-### Create the subscription definition
+## Create the subscription definition
 
 Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following to it:
 
@@ -75,7 +75,7 @@ cd PizzaDelivery
 dotnet add package Dapr.Client
 ```
 
-### Creating the service
+## Creating the service
 
 Open `/Controllers/PizzaDeliveryController.cs` Let's add a couple of import statements.
 
@@ -84,7 +84,7 @@ using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 ```
 
-### Creating the app route
+## Creating the app route
 
 Leet's create our route `/deliver` that will tell the service to start a  delivery for our order. Below **# Application routes #** add the following:
 
@@ -136,7 +136,7 @@ private async Task StartDelivery(Order order)
 }
 ```
 
-#### Publishing the event
+## Publishing the event
 
 Now let's publish! We will use the Dapr SDK to submit the event to our PubSub. Under **Dapr pub/sub** add:
 
@@ -163,7 +163,7 @@ The code above uses the Dapr SDK to publish an event to our PubSub infrastructur
 
 Our Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
 
-#### Sending the Kitchen events
+## Sending the Kitchen events
 
 Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and add the following lines to the controller class:
 
@@ -221,7 +221,7 @@ private async Task ReadyForDelivery(Order order)
 }
 ```
 
-#### Starting a delivery service
+## Starting a delivery service
 
 Going back to the _pizza-store_ service add the following readyonly strings referencing our pub/sub and the topic we will publish to:
 
@@ -242,7 +242,7 @@ private async Task Deliver(Order order)
 }
 ```
 
-#### Publishing and subscribing to events
+## Publishing and subscribing to events
 
 First, let's change our `PostOrder():` function to publish an event to our pub/sub. Replace the line below:
 
@@ -267,7 +267,7 @@ await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellat
 
 With this, we are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to Redis(our Pub/Sub component). In the next step we will subscribe to these events and save them to our state store.
 
-#### Subscribing to events
+## Subscribing to events
 
 Let's create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will ve triggered once a new event is published to the `orders` topic.
 
@@ -307,7 +307,7 @@ public async Task<IActionResult> Process([FromBody] JsonDocument rawTransaction)
 
 The code above picks up the order from the topic, deserializes it saves it to the state store. Based on the type of event, we either send the event to the kitchen or to the delivery service.
 
-#### Running the application
+## Running the application
 
 We now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
 
@@ -336,7 +336,10 @@ Check for the logs for all three services, you should now see the pubsub compone
 INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
-#### Testing the service
+## Testing the service
+
+
+#### Alternatively, you can use _cURL_ to call the endpoints
 
 Open a fourth terminal window and create a new order:
 
