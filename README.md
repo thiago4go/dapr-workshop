@@ -21,13 +21,13 @@ We are going to create 3 services to manage simulate the process of ordering a p
 
 ### Challenge 1 - State Store
 
-We will start the workshop by creating a new order and saving it to Redis, using the State Store API. You will learn how to create a component definiton fine, and how to use the Dapr SDK to save and to retrieve an item from Redis.
+We will start the workshop by creating our first service: Pizza Order! This service will be responsible for creating a new pizza order and save it to Redis, using the State Store API. You will learn how to create a component definiton fine, and how to use the Dapr SDK to save and to retrieve an item from Redis. 
 
 ![challenge-1](/imgs/challenge-1.png)
 
 ### Challenge 2 - Service Invocation
 
-Now that you learned the basics, let's jump to another popular API: Service Invocation. After the order is saved, we will create another service that is responsible for cooking the pizza for us.
+Now that you learned the basics, let's jump to another popular API: Service Invocation. After the order is saved, we will create another service that is responsible for cooking the pizza for us - Pizza Kitchen! 
 
 ![challenge-2](/imgs/challenge-2.png)
 
