@@ -1,15 +1,4 @@
-# dotnet
-
-## Clone the repository and initialize the environment
-
-On your terminal, run:
-
-```bash
-git clone https://github.com/diagrid-labs/dapr-workshop-csharp.git
-cd dapr-workshop-csharp
-```
-
-## Challenge 1 - State Store
+# Challenge 1 - State Store
 
 ### Overview
 
