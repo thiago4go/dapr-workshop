@@ -24,6 +24,16 @@ Delivered
 
 To learn more about the Publish & subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
+## Installing the dependencies
+
+Navigate to `/PizzaDelivery`. Before start coding, let's install our Dapr dependencies.
+
+```bash
+cd PizzaDelivery
+dotnet add package Dapr.Client
+```
+
+
 ## Create the Pub/Sub component
 
 Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
@@ -65,15 +75,6 @@ scopes:
 This file of kind subscription specifies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
 
 As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
-
-### Installing the dependencies
-
-Navigate to `/PizzaDelivery`. Before start coding, let's install our Dapr dependencies.
-
-```bash
-cd PizzaDelivery
-dotnet add package Dapr.Client
-```
 
 ## Creating the service
 
