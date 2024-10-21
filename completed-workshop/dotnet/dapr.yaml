@@ -16,6 +16,6 @@ apps:
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaDelivery/
     appID: pizza-delivery
-    appPort: 6003
+    appPort: 6002
     daprHTTPPort: 3503
     command: ["dotnet", "run"]

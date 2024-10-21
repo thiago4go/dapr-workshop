@@ -336,7 +336,7 @@ dapr run --app-id pizza-kitchen --app-protocol http --app-port 6001 --dapr-http-
 Finally, opena  third terminal window and navigate to the _pizza-delivery_ service. Run the command below:
 
 ```bash
-dapr run --app-id pizza-delivery --app-protocol http --app-port 6003 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-delivery --app-protocol http --app-port 6002 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
 ```
 
 > [!IMPORTANT]
@@ -419,7 +419,7 @@ apps:
     command: ["python3", "app.py"]
   - appDirPath: ./pizza-delivery/
     appID: pizza-delivery
-    appPort: 6003
+    appPort: 6002
     daprHTTPPort: 3503
     command: ["python3", "app.py"]
 ```

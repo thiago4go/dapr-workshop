@@ -16,6 +16,6 @@ apps:
     command: ["python3", "app.py"]
   - appDirPath: ./pizza-delivery/
     appID: pizza-delivery
-    appPort: 6003
+    appPort: 6002
     daprHTTPPort: 3503
     command: ["python3", "app.py"]
