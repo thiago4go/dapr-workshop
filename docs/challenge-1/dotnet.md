@@ -41,6 +41,22 @@ cd PizzaStore
 dotnet add package Dapr.Client
 ```
 
+## Registering the DaprClient
+
+Open `Program.cs` and add this using statement to the top:
+
+```csharp
+using Dapr.Client;
+```
+
+In the same file add the `DaprClient` registration to the `ServiceCollection`:
+
+```csharp
+builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
+```
+
+This enables the dependency injection of the `DaprClient` in other classes.
+
 ## Creating the service
 
 Inside `Controllers/PizzaStoreController.cs` let's add a couple of import statements.
@@ -52,6 +68,22 @@ using System.Text.Json;
 ```
 
 We are now importing _Dapr.Client_ from The Dapr dotnet SDK. That's what we will use to manage the state in our Redis instance.
+
+Create a private field for the `DaprClient` inside the controller class:
+
+```csharp
+private readonly DaprClient _daprClient;
+```
+
+Update the `PizzaStoreController` contructor to include the `DaprClient` and to set the private field:
+
+```csharp
+public PizzaStoreController(DaprClient daprClient, ILogger<PizzaStoreController> logger)
+    {
+        _logger = logger;
+        _daprClient = daprClient;
+    }
+```
 
 ## Managing state
 
@@ -69,8 +101,7 @@ Under **// -------- Dapr State Store -------- //** add the following lines of co
 // save order to state store
 private async Task SaveOrderToStateStore(Order order)
 {
-    var client = new DaprClientBuilder().Build();
-    await client.SaveStateAsync(StateStoreName, order.OrderId, order);
+    await _daprClient.SaveStateAsync(StateStoreName, order.OrderId, order);
     Console.WriteLine("Saving order " + order.OrderId + " with event " + order.Event);
 
     return;
@@ -79,8 +110,7 @@ private async Task SaveOrderToStateStore(Order order)
 // get order from state store
 private async Task<Order> GetOrderFromStateStore(string orderId)
 {
-    var client = new DaprClientBuilder().Build();
-    var order = await client.GetStateEntryAsync<Order>(StateStoreName, orderId);
+    var order = await _daprClient.GetStateEntryAsync<Order>(StateStoreName, orderId);
     Console.WriteLine("Order result: " + order.Value);
 
     return order.Value;
@@ -89,19 +119,18 @@ private async Task<Order> GetOrderFromStateStore(string orderId)
 // delete order from state store
 private async Task DeleteOrderFromStateStore(string orderId)
 {
-    var client = new DaprClientBuilder().Build();
-    await client.DeleteStateAsync(StateStoreName, orderId);
+    await _daprClient.DeleteStateAsync(StateStoreName, orderId);
     Console.WriteLine("Deleted order " + orderId);
 
     return;
 }
 ```
 
-1. `await client.SaveStateAsync(StateStoreName, order.OrderId, order);` saves the state the Redis using a key/value pair. We need to pass the state store name, the order id as a **key**, and a json representation of the order as a **value**.
+1. `await _daprClient.SaveStateAsync(StateStoreName, order.OrderId, order);` saves the state to Redis using a key/value pair. We need to pass the state store name, the order id as a **key**, and a json representation of the order as a **value**.
 
-2. `await client.GetStateEntryAsync<Order>(StateStoreName, orderId);` retrieves the state from the store. It requires a key and the state store name.
+2. `await _daprClient.GetStateEntryAsync<Order>(StateStoreName, orderId);` retrieves the state from the store. It requires a key and the state store name.
 
-3. `await client.DeleteStateAsync(StateStoreName, orderId);` deletes the state from the store. It also requires a key and the state store name.
+3. `await _daprClient.DeleteStateAsync(StateStoreName, orderId);` deletes the state from the store. It also requires a key and the state store name.
 
 ## Creating the app routes
 
