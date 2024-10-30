@@ -11,10 +11,12 @@ public class PizzaDeliveryController : ControllerBase
     private readonly string TopicName = "order";
 
     private readonly ILogger<PizzaDeliveryController> _logger;
+    private readonly DaprClient _daprClient;
 
-    public PizzaDeliveryController(ILogger<PizzaDeliveryController> logger)
+    public PizzaDeliveryController(DaprClient daprClient, ILogger<PizzaDeliveryController> logger)
     {
         _logger = logger;
+        _daprClient = daprClient;
     }
 
     // -------- Dapr Pub/Sub -------- //
@@ -26,11 +28,9 @@ public class PizzaDeliveryController : ControllerBase
             return BadRequest();
         }
 
-        DaprClient client = new DaprClientBuilder().Build();
-
         // create metadata
         var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-        await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+        await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
 
         return Ok();
     }
@@ -79,5 +79,3 @@ public class PizzaDeliveryController : ControllerBase
         await PublishEvent(order);
     }
 }
-
-

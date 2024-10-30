@@ -13,10 +13,12 @@ public class PizzaStoreController : ControllerBase
     private readonly string TopicName = "order";
 
     private readonly ILogger<PizzaStoreController> _logger;
+    private readonly DaprClient _daprClient;
 
-    public PizzaStoreController(ILogger<PizzaStoreController> logger)
+    public PizzaStoreController(DaprClient daprClient, ILogger<PizzaStoreController> logger)
     {
         _logger = logger;
+        _daprClient = daprClient;
     }
 
     // -------- Dapr State Store -------- //
@@ -24,8 +26,7 @@ public class PizzaStoreController : ControllerBase
     // save order to state store
     private async Task SaveOrderToStateStore(Order order)
     {
-        var client = new DaprClientBuilder().Build();
-        await client.SaveStateAsync(StateStoreName, order.OrderId, order);
+        await _daprClient.SaveStateAsync(StateStoreName, order.OrderId, order);
         Console.WriteLine("Saving order " + order.OrderId + " with event " + order.Event);
 
         return;
@@ -34,8 +35,7 @@ public class PizzaStoreController : ControllerBase
     // get order from state store
     private async Task<Order> GetOrderFromStateStore(string orderId)
     {
-        var client = new DaprClientBuilder().Build();
-        var order = await client.GetStateEntryAsync<Order>(StateStoreName, orderId);
+        var order = await _daprClient.GetStateEntryAsync<Order>(StateStoreName, orderId);
         Console.WriteLine("Order result: " + order.Value);
 
         return order.Value;
@@ -44,8 +44,7 @@ public class PizzaStoreController : ControllerBase
     // delete order from state store
     private async Task DeleteOrderFromStateStore(string orderId)
     {
-        var client = new DaprClientBuilder().Build();
-        await client.DeleteStateAsync(StateStoreName, orderId);
+        await _daprClient.DeleteStateAsync(StateStoreName, orderId);
         Console.WriteLine("Deleted order " + orderId);
 
         return;
