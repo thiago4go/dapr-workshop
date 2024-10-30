@@ -105,7 +105,7 @@ private async Task DeleteOrderFromStateStore(string orderId)
 
 ## Creating the app routes
 
-Before testing our application, we need to create routes so we are able to manage our state store from the frontend and by calling the REST APIs directly. Add three new routes below **# Application routes #**:
+Before testing our application, we need to create routes so we are able to manage our state store from the frontend and by calling the REST APIs directly. Add three new routes below **// -------- Application routes -------- //**:
 
 ```csharp
 // App route: Post order
@@ -154,7 +154,7 @@ To save the event we generate a new order UUID and set a new event: _Sent to Kit
 
 ## Running the application
 
-Now, open a terminal and navigate to the folder where `app.py` is located. Run the following command:
+Now, open a terminal and navigate to the `PizzaStore` folder. Run the following command:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
