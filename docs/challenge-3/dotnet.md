@@ -345,21 +345,11 @@ INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store i
 
 ## Testing the service
 
-
-#### Alternatively, you can use _cURL_ to call the endpoints
-
-Open a fourth terminal window and create a new order:
-
-```bash
-curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
-    -X POST \
-    http://localhost:8001/orders
-```
+Open `PizzaStore.rest` and create a new order, similar to what was done previous challenges.
 
 Navigate to the _pizza-store_ terminal, you should see the following logs pop up with all the events being updated:
 
-```zsh
+```bash
 == APP == Posting order: 
 == APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
 == APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Sent to kitchen
@@ -379,6 +369,18 @@ Navigate to the _pizza-store_ terminal, you should see the following logs pop up
 == APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
 == APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivered
 == APP == Returned: OK
+```
+
+
+#### Alternatively, you can use _cURL_ to call the endpoints
+
+Open a fourth terminal window and create a new order:
+
+```bash
+curl -H 'Content-Type: application/json' \
+    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -X POST \
+    http://localhost:8001/orders
 ```
 
 ## Running the front-end application
