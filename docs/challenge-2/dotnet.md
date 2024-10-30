@@ -29,7 +29,7 @@ using Dapr.Client;
 
 ## Creating the app route
 
-Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
+Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **// -------- Application routes -------- //** add the following:
 
 ```csharp
 // App route: Post order
