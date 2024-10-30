@@ -29,7 +29,7 @@ spec:
     value: ""
 ```
 
-This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state_redis` and the metadata contains host and password information for our Redis instance that was deployed as a container during Dapr's initialization. process.
+This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state.redis` and the metadata contains host and password information for our Redis instance that was deployed as a container during Dapr's initialization. process.
 
 ## Installing the dependencies
 
@@ -57,7 +57,7 @@ We are now importing _Dapr.Client_ from The Dapr dotnet SDK. That's what we will
 
 Let's create three new functions: `SaveOrderToStateStore`, `GetOrderFromStateStore`, and `DeleteOrderFromStateStore`.
 
-Start by creating a readonly string to represent the name of our statestore component defined in the previous step:
+Start by added a readonly string to the `PizzaStoreController` class to represent the name of our statestore component defined in the previous step:
 
 ```csharp
 private readonly string StateStoreName = "pizzastatestore";
