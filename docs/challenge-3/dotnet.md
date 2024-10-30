@@ -108,7 +108,7 @@ public async Task<ActionResult> PostOrder([FromBody] Order order)
 }
 ```
 
-Create a new function called `StartDelivery`. This will simply take our order and update it with multiple events, adding a small delay in between calls:
+Under **// -------- Dapr Pub/Sub -------- //** create a new function called `StartDelivery`. This will simply take our order and update it with multiple events, adding a small delay in between calls:
 
 ```csharp
 private async Task StartDelivery(Order order)
@@ -138,7 +138,14 @@ private async Task StartDelivery(Order order)
 
 ## Publishing the event
 
-Now let's publish! We will use the Dapr SDK to submit the event to our PubSub. Under **// -------- Dapr Pub/Sub -------- //** add:
+Now let's publish using Dapr! Add the following lines to the controller class to define the Pub/Sub component and topic names:
+
+```csharp
+private readonly string PubSubName = "pizzapubsub";
+private readonly string TopicName = "order";
+```
+
+We will use the Dapr SDK to submit the event to our PubSub. Under **// -------- Dapr Pub/Sub -------- //** add:
 
 ```csharp
 public async Task<IActionResult> PublishEvent(Order order)
