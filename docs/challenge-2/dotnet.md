@@ -91,7 +91,7 @@ First, update the `PostOrder()` function, add the following line after the `awai
 await Cook(order);
 ```
 
-Now, under **# Dapr Service Invocation #**, add the code below:
+Now, under **// -------- Dapr Service Invocation -------- //**, add the code below:
 
 ```csharp
 private async Task Cook(Order order)
