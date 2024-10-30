@@ -71,7 +71,7 @@ scopes:
 - pizza-store  
 ```
 
-This file of kind subscription specifies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
+This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be forwarded to a route called `/events`. This endpoint needs to be created in the `pizza-store` service.
 
 As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
 
@@ -86,7 +86,7 @@ using Dapr.Client;
 
 ## Creating the app route
 
-Leet's create our route `/deliver` that will tell the service to start a  delivery for our order. Below **# Application routes #** add the following:
+Leet's create our route `/deliver` that will tell the service to start a  delivery for our order. Below **// -------- Application routes -------- //** add the following:
 
 ```csharp
 // App route: Post order
@@ -138,7 +138,7 @@ private async Task StartDelivery(Order order)
 
 ## Publishing the event
 
-Now let's publish! We will use the Dapr SDK to submit the event to our PubSub. Under **Dapr pub/sub** add:
+Now let's publish! We will use the Dapr SDK to submit the event to our PubSub. Under **// -------- Dapr Pub/Sub -------- //** add:
 
 ```csharp
 public async Task<IActionResult> PublishEvent(Order order)
@@ -172,7 +172,7 @@ private readonly string PubSubName = "pizzapubsub";
 private readonly string TopicName = "order";
 ```
 
-Under **Dapr pub/sub**, add the following lines to send our event to the pub/sub:
+Under **// -------- Dapr Pub/Sub -------- //**, add the following lines to send our event to the pub/sub:
 
 ```csharp
 public async Task<IActionResult> PublishEvent(Order order)
