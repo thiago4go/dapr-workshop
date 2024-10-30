@@ -63,7 +63,7 @@ Start by added a readonly string to the `PizzaStoreController` class to represen
 private readonly string StateStoreName = "pizzastatestore";
 ```
 
-Under **# Dapr State Store #** add the following lines of code:
+Under **// -------- Dapr State Store -------- //** add the following lines of code:
 
 ```csharp
 // save order to state store
