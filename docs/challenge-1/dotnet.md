@@ -75,7 +75,7 @@ Create a private field for the `DaprClient` inside the controller class:
 private readonly DaprClient _daprClient;
 ```
 
-Update the `PizzaStoreController` contructor to include the `DaprClient` and to set the private field:
+Update the `PizzaStoreController` constructor to include the `DaprClient` and to set the private field:
 
 ```csharp
 public PizzaStoreController(DaprClient daprClient, ILogger<PizzaStoreController> logger)
