@@ -223,14 +223,14 @@ private async Task ReadyForDelivery(Order order)
 
 ## Starting a delivery service
 
-Going back to the _pizza-store_ service add the following readyonly strings referencing our pub/sub and the topic we will publish to:
+Going back to the `PizzaStoreController` class in the _pizza-store_ service add the following readyonly strings referencing our pub/sub and the topic we will publish to:
 
 ```csharp
 private readonly string PubSubName = "pizzapubsub";
 private readonly string TopicName = "order";
 ```
 
-Now, let's add a new service invocation function under **Dapr Service Invocation**. This is the same process from the second challenge, but now we are sending the order to our _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
+Now, let's add a new service invocation function under **// -------- Dapr Service Invocation -------- //**. This is the same process from the second challenge, but now we are sending the order to our _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
 
 ```csharp
 private async Task Deliver(Order order)
@@ -269,9 +269,9 @@ With this, we are now replacing direct calls to `SaveOrderToStateStore` and `Coo
 
 ## Subscribing to events
 
-Let's create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will ve triggered once a new event is published to the `orders` topic.
+Let's create the route `/events` in the _pizza-store_ service. This route was previously specified in our `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
 
-Under **Dapr Pub/Sub** include:
+Under **// -------- Dapr Pub/Sub -------- //** include:
 
 ```csharp
 [HttpPost("/events")]
