@@ -24,15 +24,6 @@ Delivered
 
 To learn more about the Publish & subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
-## Installing the dependencies
-
-Navigate to `/PizzaDelivery`. Before start coding, let's install our Dapr dependencies.
-
-```bash
-cd PizzaDelivery
-dotnet add package Dapr.Client
-```
-
 ## Create the Pub/Sub component
 
 Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
@@ -75,6 +66,31 @@ This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapub
 
 As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
 
+## Installing the dependencies
+
+Navigate to `/PizzaDelivery`. Before start coding, let's install our Dapr dependencies.
+
+```bash
+cd PizzaDelivery
+dotnet add package Dapr.Client
+```
+
+## Registering the DaprClient
+
+Open `Program.cs` and add this using statement to the top:
+
+```csharp
+using Dapr.Client;
+```
+
+In the same file add the `DaprClient` registration to the `ServiceCollection`:
+
+```csharp
+builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
+```
+
+This enables the dependency injection of the `DaprClient` in other classes.
+
 ## Creating the service
 
 Open `/Controllers/PizzaDeliveryController.cs` Let's add a couple of import statements.
@@ -82,6 +98,22 @@ Open `/Controllers/PizzaDeliveryController.cs` Let's add a couple of import stat
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
+```
+
+Create a private field for the `DaprClient` inside the controller class:
+
+```csharp
+private readonly DaprClient _daprClient;
+```
+
+Update the `PizzaDeliveryController` constructor to include the `DaprClient` and to set the private field:
+
+```csharp
+public PizzaDeliveryController(DaprClient daprClient, ILogger<PizzaDeliveryController> logger)
+    {
+        _logger = logger;
+        _daprClient = daprClient;
+    }
 ```
 
 ## Creating the app route
@@ -155,12 +187,10 @@ public async Task<IActionResult> PublishEvent(Order order)
       return BadRequest();
   }
 
-  DaprClient client = new DaprClientBuilder().Build();
-
   // create metadata
   var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
 
-  await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+  await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
 
   return Ok();
 }
@@ -170,9 +200,41 @@ The code above uses the Dapr SDK to publish an event to our PubSub infrastructur
 
 Our Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
 
+## Registering the DaprClient for PizzaKitchen
+
+Navigate to the `/PizzaKitchen` folder, open `Program.cs` and add this using statement to the top:
+
+```csharp
+using Dapr.Client;
+```
+
+In the same file add the `DaprClient` registration to the `ServiceCollection`:
+
+```csharp
+builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
+```
+
+This enables the dependency injection of the DaprClient in other classes.
+
 ## Sending the Kitchen events
 
-Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and add the following lines to the controller class:
+Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and create a private field for the `DaprClient` inside the controller class:
+
+```csharp
+private readonly DaprClient _daprClient;
+```
+
+Update the `PizzaKitchenController` constructor to include the `DaprClient` and to set the private field:
+
+```csharp
+public PizzaKitchenController(DaprClient daprClient, ILogger<PizzaKitchenController> logger)
+    {
+        _logger = logger;
+        _daprClient = daprClient;
+    }
+```
+
+Add the following lines to the controller class:
 
 ```csharp
 private readonly string PubSubName = "pizzapubsub";
@@ -189,11 +251,9 @@ public async Task<IActionResult> PublishEvent(Order order)
       return BadRequest();
   }
 
-  DaprClient client = new DaprClientBuilder().Build();
-
   // create metadata
   var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-  await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+  await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
 
   return Ok();
 }
@@ -228,7 +288,7 @@ private async Task ReadyForDelivery(Order order)
 }
 ```
 
-## Starting a delivery service
+## Calling the delivery service
 
 Going back to the `PizzaStoreController` class in the _pizza-store_ service add the following readyonly strings referencing our pub/sub and the topic we will publish to:
 
@@ -264,12 +324,10 @@ await Cook(order);
 By:
 
 ```csharp
-// publish the order
-var client = new DaprClientBuilder().Build();
-
 // create metadata
 var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-await client.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+// publish the order
+await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
 ```
 
 With this, we are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to Redis(our Pub/Sub component). In the next step we will subscribe to these events and save them to our state store.
