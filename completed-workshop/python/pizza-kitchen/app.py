@@ -1,14 +1,14 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
+from dapr.clients import DaprClient
+
 import json
 import time
 import logging
-from dapr.clients import DaprClient
 import random
 
+DAPR_PORT = 8002
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
-
-DAPR_PORT = 8002
 
 logging.basicConfig(level=logging.INFO)
 
@@ -48,22 +48,20 @@ def publish_event(order_data):
         )
 
 # ------------------- Application routes ------------------- #
+
 @app.route('/cook', methods=['POST'])
 def startCooking():
     order_data = request.json
     logging.info('Cooking order: %s', order_data['order_id'])
 
-    # Start cooking the order
+    # Start cooking
     start(order_data)
     
     logging.info('Cooking done: %s', order_data['order_id'])
-
-    # Order is ready for delivery
+    
+    # Set the order as ready
     ready(order_data)
 
-    logging.info('Order %s is ready for delivery!', order_data['order_id'])
+    return jsonify({'success': True})
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
-
-app.run(port=8002)
+app.run(port=DAPR_PORT)
