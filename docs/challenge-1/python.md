@@ -154,10 +154,10 @@ To save the event we generate a new order UUID and set a new event: _Sent to Kit
 
 ## Running the application
 
-Now, open a terminal and navigate to the folder where `app.py` is located. Run the following command:
+Now, open a terminal and navigate to the `/pizza-store` folder where `app.py` is located. Run the following command:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
 ```
 
 > [!IMPORTANT]
