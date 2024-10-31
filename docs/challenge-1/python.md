@@ -121,21 +121,17 @@ def createOrder():
     # Save order to state store
     save_order(order_id, order_data)
 
-    return json.dumps({'orderId': order_id}), 200, {
-        'ContentType': 'application/json'}
+    return jsonify({'orderId': order_id})
 
 # Get order by id
 @app.route('/orders/<order_id>', methods=['GET'])
 def getOrder(order_id):
     if order_id:
-        result = get_order(order_id)   
-        result_str = result.decode('utf-8')     
+        result = get_order(order_id)
 
-        return json.dumps(result_str), 200, {
-        'ContentType': 'application/json'}
+        return jsonify(result)
     
-    return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
-        'ContentType': 'application/json'}
+    return jsonify({'success': False, 'message': 'Missing order id'}), 404
 
 # Delete order by id
 @app.route('/orders/<order_id>', methods=['DELETE'])
@@ -143,11 +139,9 @@ def deleteOrder(order_id):
     if order_id:
         delete_order(order_id)   
 
-        return json.dumps({'orderId': order_id}), 200, {
-        'ContentType': 'application/json'}
+        return jsonify({'orderId': order_id})
     
-    return json.dumps({'success': False, 'message': 'Missing order id'}), 404, {
-        'ContentType': 'application/json'}
+    return jsonify({'success': False, 'message': 'Missing order id'}), 404
 ```
 
 To save the event we generate a new order UUID and set a new event: _Sent to Kitchen_. We will use these events during the next challenges.
