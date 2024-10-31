@@ -457,7 +457,7 @@ Open a browser window and navigate to `localhost:8080`, fill-out your order on t
 
 ## Dapr multi-app run
 
-Instead of opening multiple terminals to run the services, we can take advantage of a great Dapr feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/).
+Instead of opening multiple terminals to run the services, you can take advantage of a great Dapr CLI feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/). This enables you run all three services with just one command!
 
 On the parent folder, create a new file called `dapr.yaml`. Add the following content to it:
 
