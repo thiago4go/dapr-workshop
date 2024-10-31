@@ -68,7 +68,14 @@ As a Dapr good practice, we are also introducing a _scope_ to this definition fi
 
 ### Installing the dependencies
 
-Navigate to `/pizza-delivery`. and run the command below to install the dependencies:
+Open a new terminal window and create another virtual enviroment:
+
+```bash
+python -m venv env
+source env/bin/activate
+```
+
+Navigate to `/pizza-delivery` and run the command below to install the dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -79,7 +86,7 @@ pip install -r requirements.txt
 Open `app.py`. Add the import statements below:
 
 ```python
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from dapr.clients import DaprClient
 
 import json
@@ -96,7 +103,7 @@ DAPR_PUBSUB_TOPIC_NAME = 'order'
 
 ### Creating the app route
 
-Leet's create our route `/deliver` that will tell the service to start a  delivery for our order. Below **# Application routes #** add the following:
+Let's create the `/deliver` route that will tell the service to start a  delivery for the order. Below **# Application routes #** add the following:
 
 ```python
 @app.route('/deliver', methods=['POST'])
@@ -109,11 +116,10 @@ def startDelivery():
 
     logging.info('Delivery completed: %s', order_data['order_id'])
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
+    return jsonify({'success': True})
 ```
 
-Create a new function called `deliver`. This will simply take our order and update it with multiple events, adding a small delay in between calls:
+Create a new function called `deliver`. This will take the order and update it with multiple events, adding a small delay in between calls:
 
 ```python
 def deliver(order_data):
@@ -141,7 +147,7 @@ def deliver(order_data):
 
 #### Publishing the event
 
-Now let's publish! We will use the Dapr SDK to submit the event to our PubSub. Under **Dapr pub/sub** add:
+Now let's publish! You'll be using the Dapr SDK to submit the event to our PubSub. Under **# Dapr pub/sub #** add:
 
 ```python
 def publish_event(order_data):
@@ -155,18 +161,18 @@ def publish_event(order_data):
         )
 ```
 
-Our Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
+The Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
 
 #### Sending the Kitchen events
 
-Open `python/pizza-kithen` and add the following lines below the import statements:
+Open `python/pizza-kitchen` and add the following lines below the import statements:
 
 ```python
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 ```
 
-Under **Dapr pub/sub**, add the following lines to send our event to the pub/sub:
+Under **# Dapr pub/sub #**, add the following lines to send our event to the pub/sub:
 
 ```python
 def publish_event(order_data):
@@ -208,53 +214,45 @@ def ready(order_data):
 
 #### Starting a delivery service
 
-Going back to the _pizza-store_ service, let's update the import statements:
+Going back to the _pizza-store_ service, add the folliowing contants referencing the pub/sub and the topic to publish to:
+
+Update the imports to be:
 
 ```python
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from cloudevents.http import from_http
 from dapr.clients import DaprClient
 
 import uuid
+import time
 import logging
 import json
-import os
-import requests
 ```
-
-Add the folliowing contants referencing our pub/sub and the topic we will publish to:
 
 ```python
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 ```
 
-Now, let's add a new service invocation function under **Dapr Service Invocation**. This is the same process from the second challenge, but now we are sending the order to our _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
+Now, let's add a new service invocation function under **# Dapr Service Invocation #**. This is the same process from the second challenge, but now you are sending the order to the _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
 
 ```python
 def start_delivery(order_data):
-    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3501')
-
-    # Adding app id as part of the header
-    headers = {'dapr-app-id': 'pizza-delivery', 'content-type': 'application/json'}
-
-    url = '%s/deliver' % (base_url)
-    print('url: ' + url, flush=True)
-
-    # Invoking a service
-    result = requests.post(
-        url=url,
-        data=json.dumps(order_data),
-        headers=headers
-    )
-    print('result: ' + str(result), flush=True)
-
-    time.sleep(1)
+    with DaprClient() as client:
+        response = client.invoke_method(
+            'pizza-delivery',
+            'deliver',
+            http_verb='POST',
+            data=json.dumps(order_data),
+        )
+        print('result: ' + str(response), flush=True)
+        time.sleep(1)
 ```
 
 #### Publishing and subscribing to events
 
-First, let's change our `createOrder():` function to publish an event to our pub/sub. Replace the line below:
+First, let's change the `createOrder():` function to publish an event to the pub/sub. Replace the line below:
 
 ```python
 # Save order to state store
@@ -277,13 +275,13 @@ with DaprClient() as client:
     )
 ```
 
-With this, we are now replacing direct calls to `save_oder` and `start_cook`  with a `publish_event` process. This will send the events to Redis(our Pub/Sub component). In the next step we will subscribe to these events and save them to our state store.
+With this, you are now replacing direct calls to `save_order` and `start_cook`  with a `publish_event` process. This will send the events to Redis (our Pub/Sub component). In the next step you will subscribe to these events and save them to the state store.
 
 #### Subscribing to events
 
-Let's create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will ve triggered once a new event is published to the `orders` topic.
+Let's create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
 
-Under **Dapr Pub/Sub** include:
+Under **# Dapr Pub/Sub #** include:
 
 ```python
 # Endpoint triggered when a new event is published to the topic 'order'
@@ -312,8 +310,7 @@ def orders_subscriber():
         # Starts a delivery
         start_delivery(order.data)
 
-    return json.dumps({'success': "True"}), 200, {
-        'ContentType': 'application/json'}
+    return jsonify({'success': "True"})
 ```
 
 The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, we either send the event to the kitchen or to the delivery service.
@@ -321,22 +318,24 @@ The code above picks up the order from the topic, checks for the `order_id` and 
 
 #### Running the application
 
-We now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
+You now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them.
+
+In the terminal for _pizza-store_ run:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
 ```
 
-Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
+In the terminal for _pizza-kitchen_ run:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  --resources-path ../../resources -- python3 app.py
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  --resources-path ../resources -- python3 app.py
 ```
 
-Finally, opena  third terminal window and navigate to the _pizza-delivery_ service. Run the command below:
+In the terminal for _pizza-delivery_ run:
 
 ```bash
-dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources  -- python3 app.py
 ```
 
 > [!IMPORTANT]
