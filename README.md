@@ -38,4 +38,5 @@ In the final challenge, you will create your third service, `pizza-delivery`. Yo
 
 ## Get started
 
-Complete the [technical prerequisites](./docs/prerequisites.md) before starting your first challenge!
+No existing knowledge of Dapr or microservices is needed to complete this workshop but basic programming skills for your language of choice are required.
+Today this workshop offers Dotnet and Python options. Complete the [technical prerequisites](./docs/prerequisites.md) and start the first challenge!
