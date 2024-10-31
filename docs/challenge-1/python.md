@@ -44,7 +44,7 @@ pip install -r requirements.txt
 Open `/pizza-store/app.py`. Notice the two import lines, let's add a couple more libraries there:
 
 ```python
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dapr.clients import DaprClient
 
