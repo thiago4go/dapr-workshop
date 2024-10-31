@@ -4,8 +4,8 @@
 
 On our first challenge, we will:
 
-- Create our first Dapr application: _pizza-store_.
 - Configure a State Store component for our local Redis instance to save, get, and delete an order.
+- Update the _pizza-store_ application to use the Dapr State Management API.
 - Run our app locally using `dapr run`.
 
 To learn more about the State Management Building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
