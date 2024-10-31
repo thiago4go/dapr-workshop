@@ -2,9 +2,9 @@
 
 ### Overview
 
-On our third challenge, our goal will be to update the state store with all the events from our order. For that, we will:
+In this challenge, the goal is to update the state store with all the events from our order. For that, you will:
 
-- Update our order with the following event states:
+- Update the order with the following event states:
 
 ```text
 Sent to kitchen
@@ -62,9 +62,9 @@ scopes:
 - pizza-store  
 ```
 
-This file of kind subscription specifies that every time we get a new message in our Pub/Sub `pizzapubsub` in the topic `orders`, a route called `/events` will be triggered.
+This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be forwarded to a route called `/events`. This endpoint needs to be created in the `pizza-store` service.
 
-As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
+As a Dapr good practice, a _scope_ is added to this definition file. By setting `pizza-store` as the scope, it is guaranteed that this subscription rule will apply only to this service and will be ignored by others.
 
 ### Installing the dependencies
 
@@ -94,7 +94,7 @@ import time
 import logging
 ```
 
-Add the following constants, we will use them to connect to our Pub/Sub and topic:
+Add the following constants, they will be used to connect to our Pub/Sub and topic:
 
 ```python
 DAPR_PUBSUB_NAME = 'pizzapubsub'
@@ -313,7 +313,7 @@ def orders_subscriber():
     return jsonify({'success': "True"})
 ```
 
-The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, we either send the event to the kitchen or to the delivery service.
+The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, it is either sent to the _pizza-kitchen_ or to the _pizza-delivery_ service.
 
 
 #### Running the application
@@ -395,7 +395,7 @@ Open a browser window and navigate to `localhost:8080`, fill-out your order on t
 
 ## Dapr multi-app run
 
-Instead of opening multiple terminals to run the services, we can take advantage of a great Dapr feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/).
+Instead of opening multiple terminals to run the services, you can take advantage of a great Dapr CLI feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/). This enables you run all three services with just one command!
 
 Inside the `/python` folder, create a new file called `dapr.yaml`. Add the following content to it:
 
@@ -433,6 +433,8 @@ All three services will run at the same time and log events at the same terminal
 
 ## Congratulations
 
-Congratulations in completing all of the three challenges. Stop by our booth to show all challenges completed and get some swag for your hard work!
+Congratulations in completing all of the three challenges. Stop by the Diagrid booth to show all challenges completed and get some swag for your hard work!
 
 You have now scratched the surface of what Dapr can do. It's highly recommended navigating to the [Dapr docs](https://docs.dapr.io/) and learning more about it.
+
+If you have any questions or comments about Dapr, please join the [Dapr Discord](https://bit.ly/dapr-discord)!
