@@ -103,7 +103,7 @@ def start_cook(order_data):
             http_verb='POST',
             data=json.dumps(order_data),
         )
-        print('result: ' + str(response), flush=True)
+        print('result: ' + response.text(), flush=True)
 ```
 
 Let's break down the code above.
