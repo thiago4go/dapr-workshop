@@ -2,16 +2,16 @@
 
 ## Overview
 
-On our second challenge, we will send the order created in the previous step to the kitchen! For that, we will:
+In this challenge, you will send the order created in the previous step to the kitchen! For that, you will:
 
 - Create a new service called _pizza-kitchen_ with a `/cook` endpoint.
-- Update _pizza-store_ to invoke the `/cook` endpoint with the Service Invocation building block.
+- Update _pizza-store_ to invoke the `/cook` endpoint with the Service Invocation API.
 
-To learn more about the Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
+To learn more about the Service Invocation API, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
 
 ### Installing the dependencies
 
-Open a new terminal window and create another virtual enviroment:
+Open a new terminal window and create another virtual environment:
 
 ```bash
 python -m venv env
@@ -40,7 +40,7 @@ import random
 
 ## Creating the app route
 
-Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
+Let's create a route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
 
 ```python
 @app.route('/cook', methods=['POST'])
@@ -59,9 +59,9 @@ def startCooking():
     return jsonify({'success': True})
 ```
 
-This route is fairly simple. It is a POST request with the `order` content created in the last challenge. We will start the order and, after it is cooked, we will say it is ready.
+This route is fairly simple. It is a POST endpoint that accepts the `order` content created in the last challenge. The order is updated with status events _Cooking_ and _Ready for delivery_.
 
-Add two helper functions to modify the order to _Cooking_ and to _Ready for delivery_.
+Add two helper functions to modify the order for these events:
 
 ```python
 def start(order_data):
@@ -83,7 +83,7 @@ def ready(order_data):
 
 ## Calling the app route
 
-Let's go back to the _pizza-store_ service. We will create a Service Invocation action to call the `/cook` endpoint from our _pizza-kitchen_ service.
+Let's go back to the _pizza-store_ service. You will create a Service Invocation action to call the `/cook` endpoint from the _pizza-kitchen_ service.
 
 First, update the `createOrder()` function, add the following line after the `save_order((order_id, order_data))` invocation:
 
@@ -108,7 +108,7 @@ def start_cook(order_data):
 
 Let's break down the code above.
 
-1. First we creating an instance of the DaprClient.
+1. First an instance of the `DaprClient` is created.
 
 ```python
 with DaprClient() as client:
@@ -124,7 +124,7 @@ With this, services only need to communicate to sidecars through localhost and t
 
 ## Running the application
 
-We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-store_, ensure you're still in the _pizza-store_ folder where `app.py` is located and run the command below:
+You now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-store_, ensure you're still in the _pizza-store_ folder where `app.py` is located and run the command below:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
@@ -168,4 +168,4 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 
 ## Next
 
-You may have noticed that we are updating the event information on every new step we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/python.md)!
+You probably noticed that the event information is updated with every step in the application, but it is not getting saved to the Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/python.md)!
