@@ -22,7 +22,7 @@ pip install -r requirements.txt
 Open `app.py`. Add the import statements below:
 
 ```python
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from dapr.clients import DaprClient
 
 import json
@@ -49,8 +49,7 @@ def startCooking():
     # Set the order as ready
     ready(order_data)
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
+    return jsonify({'success': True})
 ```
 
 This route is fairly simple. It is a POST request with the `order` content created in the last challenge. We will start the order and, after it is cooked, we will say it is ready.
