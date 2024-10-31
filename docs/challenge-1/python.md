@@ -73,18 +73,18 @@ Under **# Dapr State Store #** add the following lines of code:
 def save_order(order_id, order_data):
     with DaprClient() as client:
         # Save state 
-        client.save_state(DAPR_STORE_NAME, order_id, str(order_data))
+        client.save_state(DAPR_STORE_NAME, order_id, json.dumps(order_data))
         logging.info('Saving Order %s with event %s', order_id, order_data['event'])
 
         return order_id
-    
+
 def get_order(order_id):
     with DaprClient() as client:
         # Get state
         result = client.get_state(DAPR_STORE_NAME, order_id)
         logging.info('Order result - %s', str(result.data))
 
-        return result.data
+        return json.loads(result.data)
     
 def delete_order(order_id):
     with DaprClient() as client:
