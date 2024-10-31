@@ -12,10 +12,10 @@ To learn more about the State Management Building block, refer to the [Dapr docs
 
 ## Installing the dependencies
 
-Now navigate to `/pizza-store` and run the command below to install the dependencies:
+Now navigate to the `/pizza-store` folder and run the command below to install the dependencies:
 
 ```bash
-pip install -r pizza-store/requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Configuring the state store
