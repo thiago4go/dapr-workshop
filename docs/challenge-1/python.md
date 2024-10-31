@@ -37,7 +37,7 @@ spec:
     value: ""
 ```
 
-This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state_redis` and the metadata contains host and password information for our Redis instance that was deployed as a container during Dapr's initialization. process.
+This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state.redis` and the metadata contains host and password information for our Redis instance that was deployed as a container during Dapr's initialization. process.
 
 ## Creating the service
 
