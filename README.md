@@ -35,7 +35,7 @@ Now that you learned the basics, let's jump to another popular API: Service Invo
 
 Finally, we will create our third service: Pizza Delivery! We will add the Pub/Sub Dapr API to our services to publish events to Redis (our Pub/Sub component). These events include all steps necessary ion a pizza ordering and delivering process. On each event published, our Pizza Store will subscribe and save the current state of the order to Redis.
 
-<img src="/imgs/challenge-3.png" width=50% height=50%>
+<img src="/imgs/challenge-3.png" width=75% height=75%>
 
 ## Getting started
 
