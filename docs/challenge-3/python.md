@@ -246,13 +246,13 @@ def start_delivery(order_data):
             http_verb='POST',
             data=json.dumps(order_data),
         )
-        print('result: ' + str(response), flush=True)
+        print('result: ' + response.text(), flush=True)
         time.sleep(1)
 ```
 
 #### Publishing and subscribing to events
 
-First, let's change the `createOrder():` function to publish an event to the pub/sub. Replace the line below:
+First, change the `createOrder():` function to publish an event to the pub/sub. Replace the lines below:
 
 ```python
 # Save order to state store
@@ -262,7 +262,7 @@ save_order(order_id, order_data)
 start_cook(order_data)
 ```
 
-By:
+With:
 
 ```python
 # Publish an event/message using Dapr PubSub
