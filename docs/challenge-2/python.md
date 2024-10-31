@@ -11,6 +11,13 @@ To learn more about the Service Invocation building block, refer to the [Dapr do
 
 ### Installing the dependencies
 
+Open a new terminal window and create another virtual enviroment:
+
+```bash
+python -m venv env
+source env/bin/activate
+```
+
 Navigate to `/pizza-kitchen` and run the command below to install the dependencies:
 
 ```bash
@@ -89,72 +96,41 @@ Now, under **# Dapr Service Invocation #**, add the code below:
 
 ```python
 def start_cook(order_data):
-    # Set base url
-    base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv(
-                    'DAPR_HTTP_PORT', '3501')
-    
-    # Adding pizza-kitchen's app id as part of the header
-    headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
-
-    # Adding the endpoint /cook to the base url
-    url = '%s/cook' % (base_url)
-
-    # Invoking the service
-    result = requests.post(
-        url=url,
-        data=json.dumps(order_data),
-        headers=headers
-    )
-    print('result: ' + str(result), flush=True)
+    with DaprClient() as client:
+        response = client.invoke_method(
+            'pizza-kitchen',
+            'cook',
+            http_verb='POST',
+            data=json.dumps(order_data),
+        )
+        print('result: ' + str(response), flush=True)
 ```
 
 Let's break down the code above.
 
-1. First we are setting the base URL:
+1. First we creating an instance of the DaprClient.
 
 ```python
-base_url = os.getenv('BASE_URL', 'http://localhost') + ':' + os.getenv('DAPR_HTTP_PORT', '3501')
+with DaprClient() as client:
 ```
 
-Notice that the code above calls a URL with the host `localhost` with the port `3501`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+2. The `invoke_method` function is used to send a request to another application.
+
+Notice that the parameters provided to the invoke_method do not include any url. It contains the application ID of the targer application (_pizza-kitchen_) and the method to invoke (`cook`). This application will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-store_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The _pizza-store_ sidecar will find the location of the _pizza-kitchen_ sidecar via a name resolution component. More info about different name resolution components can be found in the [Dapr docs](https://docs.dapr.io/reference/components-reference/supported-name-resolution/). The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
-2. Then, we add the headers and the endpoint:
-
-```python
-# Adding pizza-kitchen's app id as part of the header
-headers = {'dapr-app-id': 'pizza-kitchen', 'content-type': 'application/json'}
-
-# Adding the endpoint /cook to the base url
-url = '%s/cook' % (base_url)
-```
-
-The code above creates the header that is going to be attached to our request. The most important piece is the `'dapr-app-id': 'pizza-kitchen'`. By adding this to the header and including the route `/cook` to the end of the base URL, the _pizza-store_ sidecar knows exactly the service and route that it needs to invoke.
-
 With this, services only need to communicate to sidecars through localhost and the sidecar handles the discovery capabilities.
-
-3. Finally, we send the request:
-
-```python
-# Invoking the service
-result = requests.post(
-    url=url,
-    data=json.dumps(order_data),
-    headers=headers
-)
-print('result: ' + str(result), flush=True)
-```
 
 ## Running the application
 
-We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
+We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-store_, ensure you're still in the _pizza-store_ folder where `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../../resources  -- python3 app.py
+dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
 ```
 
-Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
+In the terminal for the  _pizza-kitchen_ application ensure you are in the _pizza-kitchen_ folder and run the command below:
 
 ```bash
 dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502  -- python3 app.py
@@ -184,10 +160,9 @@ curl -H 'Content-Type: application/json' \
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
 
-```zsh
-== APP == INFO:root:Cooking order: f75d9c94-155c-40ce-80c1-94296d2b51e9
-== APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 updated with event: Cooking
-== APP == INFO:root:Order f75d9c94-155c-40ce-80c1-94296d2b51e9 is ready for delivery!
+```bash
+== APP == INFO:root:Cooking order: e0bfa96e-08e5-43be-bba6-4ebe0b6baef7
+== APP == INFO:root:Cooking done: e0bfa96e-08e5-43be-bba6-4ebe0b6baef7
 == APP == INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 20:48:48] "POST /cook HTTP/1.1" 200 -
 ```
 
