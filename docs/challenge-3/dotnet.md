@@ -495,6 +495,8 @@ All three services will run at the same time and log events at the same terminal
 
 ## Congratulations
 
-Congratulations in completing all of the three challenges. Stop by our booth to show all challenges completed and get some swag for your hard work!
+Congratulations in completing all of the three challenges. Stop by the Diagrid booth to show all challenges completed and get some swag for your hard work!
 
 You have now scratched the surface of what Dapr can do. It's highly recommended navigating to the [Dapr docs](https://docs.dapr.io/) and learning more about it.
+
+If you have any questions or comments about Dapr, please join the [Dapr Discord](https://bit.ly/dapr-discord)!
