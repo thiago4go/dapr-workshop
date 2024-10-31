@@ -61,4 +61,4 @@ def deliver(order_data):
     order_data['event'] = 'Delivered'
     publish_event(order_data)
 
-app.run(port=8003)
+app.run(port=DAPR_PORT)
