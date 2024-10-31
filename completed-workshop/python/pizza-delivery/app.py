@@ -1,21 +1,20 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from dapr.clients import DaprClient
 
 import json
 import time
 import logging
 
-
+DAPR_PORT = 8003
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
-
-DAPR_PORT = 8003
 
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
 # ------------------- Dapr pub/sub ------------------- #
+
 def publish_event(order_data):
     with DaprClient() as client:
         # Publish an event/message using Dapr PubSub
@@ -27,17 +26,18 @@ def publish_event(order_data):
         )
 
 # ------------------- Application routes ------------------- #
+
 @app.route('/deliver', methods=['POST'])
 def startDelivery():
     order_data = request.json
     logging.info('Delivery started: %s', order_data['order_id'])
 
+    # Start delivery
     deliver(order_data)
 
     logging.info('Delivery completed: %s', order_data['order_id'])
 
-    return json.dumps({'success': True}), 200, {
-        'ContentType': 'application/json'}
+    return jsonify({'success': True})
 
 def deliver(order_data):
     # Simulate delivery time and events
