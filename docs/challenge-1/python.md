@@ -10,14 +10,6 @@ On our first challenge, we will:
 
 To learn more about the State Management Building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
 
-## Installing the dependencies
-
-Now navigate to the `/pizza-store` folder and run the command below to install the dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
 ## Configuring the state store
 
 Navigate to the `/resources` folder and create a new file called `statestore.yaml`. Add the content below to the file:
@@ -39,9 +31,17 @@ spec:
 
 This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state.redis` and the metadata contains host and password information for our Redis instance that was deployed as a container during Dapr's initialization process.
 
+## Installing the dependencies
+
+Now navigate to the `/pizza-store` folder and run the command below to install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Creating the service
 
-Open `app.py`. Notice the two import lines, let's add a couple more libraries there:
+Open `/pizza-store/app.py`. Notice the two import lines, let's add a couple more libraries there:
 
 ```python
 from flask import Flask, request
