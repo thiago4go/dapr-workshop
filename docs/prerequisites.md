@@ -117,16 +117,18 @@ On your terminal, run:
 
 ```bash
 git clone https://github.com/diagrid-labs/dapr-workshop-python.git
-cd dapr-worksop-python
+cd dapr-workshop-python
 ```
 
-Install vevn:
+Open the `dapr-workshop-python` folder in VSCode. If you want to use the devcontainer option, select _Open in Container_ when VSCode shows this message.
+
+If you're not using the devcontainer, install `virtualenv` first:
 
 ```bash
 pip install virtualenv
 ```
 
-Initialize the virtual environment:
+Initialize the virtual environment on your local machine or in the devcontainer:
 
 ```bash
 python -m venv env
@@ -145,6 +147,8 @@ On your terminal, run:
 git clone https://github.com/diagrid-labs/dapr-workshop-csharp.git
 cd dapr-worksop-csharp
 ```
+
+Open the `dapr-workshop-csharp` folder in VSCode. If you want to use the devcontainer option, select _Open in Container_ when VSCode shows this message.
 
 </details>
 
