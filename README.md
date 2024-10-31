@@ -23,19 +23,19 @@ We are going to create 3 services to manage simulate the process of ordering a p
 
 We will start the workshop by creating our first service: Pizza Order! This service will be responsible for creating a new pizza order and save it to Redis, using the State Store API. You will learn how to create a component definition file, and how to use the Dapr SDK to save and retrieve an item from Redis. 
 
-![challenge-1](/imgs/challenge-1.png)
+<img src="/imgs/challenge-1.png" width=50% height=50%>
 
 ### Challenge 2 - Service Invocation
 
 Now that you learned the basics, let's jump to another popular API: Service Invocation. After the order is saved, we will create another service that is responsible for cooking the pizza for us - Pizza Kitchen! This service will have an endpoint that will be called from our Pizza Store service.
 
-![challenge-2](/imgs/challenge-2.png)
+<img src="/imgs/challenge-2.png" width=50% height=50%>
 
 ### Challenge 3 - Pub/Sub
 
 Finally, we will create our third service: Pizza Delivery! We will add the Pub/Sub Dapr API to our services to publish events to Redis (our Pub/Sub component). These events include all steps necessary ion a pizza ordering and delivering process. On each event published, our Pizza Store will subscribe and save the current state of the order to Redis.
 
-![challenge-3](/imgs/challenge-3.png)
+<img src="/imgs/challenge-3.png" width=50% height=50%>
 
 ## Getting started
 
