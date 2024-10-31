@@ -183,7 +183,12 @@ Open `PizzaStore.rest` and place a new order by clicking the button `Send reques
 
 ![send-request](/imgs/rest-request.png)
 
-Copy the value of the `order id` returned and replace the value on `@order-id = 7adb27dd-53c3-4f20-be7f-591e155c9f07` with it.
+Once an order is posted, the Order ID is extracted from the response body and assigned to the @order-id variable:
+
+```bash
+@order-id = {{postRequest.response.body.order_id}}
+```
+So you can immediately do a `GET` or `DELETE` request with the correct Order ID.
 
 To retrieve and delete the order, run the corresponding requests.
 
