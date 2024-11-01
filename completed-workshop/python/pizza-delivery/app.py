@@ -13,6 +13,28 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
+def deliver(order_data):
+    # Simulate delivery time and events
+    time.sleep(3)
+    order_data['event'] = 'Delivery started'
+    publish_event(order_data)
+
+    time.sleep(3)
+    order_data['event'] = 'Order picked up by driver'
+    publish_event(order_data)
+
+    time.sleep(5)
+    order_data['event'] = 'En-route'
+    publish_event(order_data)
+    
+    time.sleep(5)
+    order_data['event'] = 'Nearby'
+    publish_event(order_data)
+
+    time.sleep(5)
+    order_data['event'] = 'Delivered'
+    publish_event(order_data)
+
 # ------------------- Dapr pub/sub ------------------- #
 
 def publish_event(order_data):
@@ -38,27 +60,5 @@ def startDelivery():
     logging.info('Delivery completed: %s', order_data['order_id'])
 
     return jsonify({'success': True})
-
-def deliver(order_data):
-    # Simulate delivery time and events
-    time.sleep(3)
-    order_data['event'] = 'Delivery started'
-    publish_event(order_data)
-
-    time.sleep(3)
-    order_data['event'] = 'Order picked up by driver'
-    publish_event(order_data)
-
-    time.sleep(5)
-    order_data['event'] = 'En-route'
-    publish_event(order_data)
-    
-    time.sleep(5)
-    order_data['event'] = 'Nearby'
-    publish_event(order_data)
-
-    time.sleep(5)
-    order_data['event'] = 'Delivered'
-    publish_event(order_data)
 
 app.run(port=APP_PORT)
