@@ -212,11 +212,9 @@ def ready(order_data):
     return order_data
 ```
 
-#### Starting a delivery service
+#### Calling the delivery service
 
-Going back to the _pizza-store_ service, add the folliowing contants referencing the pub/sub and the topic to publish to:
-
-Update the imports to be:
+Going back to the _pizza-store_ service, update the imports to be:
 
 ```python
 from flask import Flask, request, jsonify
@@ -224,11 +222,14 @@ from flask_cors import CORS
 from cloudevents.http import from_http
 from dapr.clients import DaprClient
 
+import requests
 import uuid
 import time
 import logging
 import json
 ```
+
+Add the folliowing contants referencing the pub/sub and the topic to publish to:
 
 ```python
 DAPR_PUBSUB_NAME = 'pizzapubsub'
@@ -239,15 +240,21 @@ Now, let's add a new service invocation function under **# Dapr Service Invocati
 
 ```python
 def start_delivery(order_data):
-    with DaprClient() as client:
-        response = client.invoke_method(
-            'pizza-delivery',
-            'deliver',
-            http_verb='POST',
-            data=json.dumps(order_data),
-        )
-        print('result: ' + response.text(), flush=True)
-        time.sleep(1)
+    app_id = 'pizza-delivery'
+    headers = {'dapr-app-id': app_id, 'content-type': 'application/json'}
+    
+    base_url = 'http://localhost'
+    method = 'deliver'
+    dapr_http_port = 3501
+    target_url = '%s:%s/%s' % (base_url, dapr_http_port, method)
+
+    response = requests.post(
+        url=target_url,
+        data=json.dumps(order_data),
+        headers=headers
+    )
+    print('result: ' + response.text, flush=True)
+    time.sleep(1)
 ```
 
 #### Publishing and subscribing to events
