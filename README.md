@@ -1,5 +1,7 @@
 # Dapr Workshop
 
+![Dapr sidecar](imgs/dapr_sidecar.png)
+
 Welcome to Diagrid's [Dapr](https://dapr.io/) Workshop! This repository contains a set of hands-on challenges designed to introduce you to Dapr's most popular APIs and give you a starting point to build your own distributed applications.
 
 Microservices architectures are popular for a variety of reasons - they enable polyglot development, are easily scaled, and perform simple, focused tasks. However, as the number of microservices grows, so does the complexity of the system. Managing security, observability, and resiliency becomes increasingly challenging, often leading to the same problems being solved over and over again.
@@ -41,4 +43,4 @@ In the final challenge, you will create your third service, `pizza-delivery`. Yo
 ## Get started
 
 No existing knowledge of Dapr or microservices is needed to complete this workshop but basic programming skills for your language of choice are required.
-Today this workshop offers Dotnet and Python options. Complete the [technical prerequisites](./docs/prerequisites.md) and start the first challenge!
+Today this workshop offers challenges in .NET and Python. Complete the [technical prerequisites](./docs/prerequisites.md) and start the first challenge!
