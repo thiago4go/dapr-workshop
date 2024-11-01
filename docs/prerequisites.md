@@ -5,9 +5,9 @@
 - [Docker](https://docs.docker.com/engine/install/)
 - [Visual Studio Code](https://code.visualstudio.com/download)
 
-If you use the DevContainer configuration for the .NET or Python repository, you don't need anything else, since everything is part of the DevContainer already. You can continue to the [Some Considerations](#some-considerations) section.
+If you use the devcontainer configuration for the .NET or Python repository, you don't need anything else, since everything is part of the devcontainer already. You can continue to the [Some Considerations](#some-considerations) section.
 
-If you're **not** using the DevContainer option please also install:
+If you're **not** using the devcontainer option please also install:
 
 - [REST Client for VS Code](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
 - Optional to visualize Redis data: [Database CLient for VSCode](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-database-client2) or [Redis Insights](https://redis.io/insight/) 

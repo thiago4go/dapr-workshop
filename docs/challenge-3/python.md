@@ -324,7 +324,6 @@ def orders_subscriber():
 
 The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, it is either sent to the _pizza-kitchen_ or to the _pizza-delivery_ service.
 
-
 #### Running the application
 
 You now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them.
@@ -440,10 +439,6 @@ dapr run -f .
 
 All three services will run at the same time and log events at the same terminal window.
 
-## Congratulations
+---
 
-Congratulations in completing all of the three challenges. Stop by the Diagrid booth to show all challenges completed and get some swag for your hard work!
-
-You have now scratched the surface of what Dapr can do. It's highly recommended navigating to the [Dapr docs](https://docs.dapr.io/) and learning more about it.
-
-If you have any questions or comments about Dapr, please join the [Dapr Discord](https://bit.ly/dapr-discord)!
+[Next: Challenge completion & reward](../completion.md)
