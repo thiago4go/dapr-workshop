@@ -3,12 +3,14 @@ from flask_cors import CORS
 from cloudevents.http import from_http
 from dapr.clients import DaprClient
 
+import requests
 import uuid
 import time
 import logging
 import json
 
-DAPR_PORT = 8001
+APP_PORT = 8001
+DAPR_STORE_NAME = 'pizzastatestore'
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 
@@ -16,8 +18,6 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
-
-DAPR_STORE_NAME = 'pizzastatestore'
 
 # ------------------- Dapr State Store ------------------- #
 
@@ -48,25 +48,37 @@ def delete_order(order_id):
 # ------------------- Dapr Service Invocation ------------------- #
 
 def start_cook(order_data):
-    with DaprClient() as client:
-        response = client.invoke_method(
-            'pizza-kitchen',
-            'cook',
-            http_verb='POST',
-            data=json.dumps(order_data),
-        )
-        print('result: ' + response.text(), flush=True)
+    app_id = 'pizza-kitchen'
+    headers = {'dapr-app-id': app_id, 'content-type': 'application/json'}
+    
+    base_url = 'http://localhost'
+    method = 'cook'
+    dapr_http_port = 3501
+    target_url = '%s:%s/%s' % (base_url, dapr_http_port, method)
+
+    response = requests.post(
+        url=target_url,
+        data=json.dumps(order_data),
+        headers=headers
+    )
+    print('result: ' + response.text, flush=True)
 
 def start_delivery(order_data):
-    with DaprClient() as client:
-        response = client.invoke_method(
-            'pizza-delivery',
-            'deliver',
-            http_verb='POST',
-            data=json.dumps(order_data),
-        )
-        print('result: ' + response.text(), flush=True)
-        time.sleep(1)
+    app_id = 'pizza-delivery'
+    headers = {'dapr-app-id': app_id, 'content-type': 'application/json'}
+    
+    base_url = 'http://localhost'
+    method = 'deliver'
+    dapr_http_port = 3501
+    target_url = '%s:%s/%s' % (base_url, dapr_http_port, method)
+
+    response = requests.post(
+        url=target_url,
+        data=json.dumps(order_data),
+        headers=headers
+    )
+    print('result: ' + response.text, flush=True)
+    time.sleep(1)
 
 # ------------------- Dapr Pub/Sub ------------------- #
 
@@ -98,9 +110,7 @@ def orders_subscriber():
 
     return jsonify({'success': "True"})
 
-
 # ------------------- Application routes ------------------- #
-
 # Create a new order
 @app.route('/orders', methods=['POST'])
 def createOrder():
@@ -144,4 +154,4 @@ def deleteOrder(order_id):
     
     return jsonify({'success': False, 'message': 'Missing order id'}), 404
 
-app.run(port=DAPR_PORT)
+app.run(port=APP_PORT)
