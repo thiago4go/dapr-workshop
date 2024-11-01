@@ -5,7 +5,7 @@ import json
 import time
 import logging
 
-DAPR_PORT = 8003
+APP_PORT = 8003
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 
@@ -61,4 +61,4 @@ def deliver(order_data):
     order_data['event'] = 'Delivered'
     publish_event(order_data)
 
-app.run(port=DAPR_PORT)
+app.run(port=APP_PORT)
