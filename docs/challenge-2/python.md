@@ -96,27 +96,50 @@ Now, under **# Dapr Service Invocation #**, add the code below:
 
 ```python
 def start_cook(order_data):
-    with DaprClient() as client:
-        response = client.invoke_method(
-            'pizza-kitchen',
-            'cook',
-            http_verb='POST',
-            data=json.dumps(order_data),
-        )
-        print('result: ' + response.text(), flush=True)
+    app_id = 'pizza-kitchen'
+    headers = {'dapr-app-id': app_id, 'content-type': 'application/json'}
+    
+    base_url = 'http://localhost'
+    dapr_http_port = 3501
+    method = 'cook'
+    target_url = '%s:%s/%s' % (base_url, dapr_http_port, method)
+
+    response = requests.post(
+        url=target_url,
+        data=json.dumps(order_data),
+        headers=headers
+    )
+    print('result: ' + response.text, flush=True)
 ```
 
 Let's break down the code above.
 
-1. First an instance of the `DaprClient` is created.
+1. First the HTTP headers are defined:
 
 ```python
-with DaprClient() as client:
+headers = {'dapr-app-id': app_id, 'content-type': 'application/json'}
 ```
 
-2. The `invoke_method` function is used to send a request to another application.
+The Dapr sidecar will use the information in the `dapr-app-id` to discover the location of the _pizza-kitchen_ app.
 
-Notice that the parameters provided to the invoke_method do not include any url. It contains the application ID of the targer application (_pizza-kitchen_) and the method to invoke (`cook`). This application will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-store_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The _pizza-store_ sidecar will find the location of the _pizza-kitchen_ sidecar via a name resolution component. More info about different name resolution components can be found in the [Dapr docs](https://docs.dapr.io/reference/components-reference/supported-name-resolution/). The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+2. The `target_url` is created that will be invoked:
+
+```python
+target_url = '%s:%s/%s' % (base_url, dapr_http_port, method)
+```
+
+This starts with localhost, since the _pizza-store_ Dapr sidecar is running there, the port of this Dapr sidecar (`3501`), and the method that will be called (`cook`) on the _pizza-kitchen_ app. 
+
+3. Finally the `requests.post` method is used to combine the `target_url`, `order_data` payload and the `headers`:
+
+ ```python
+ response = requests.post(
+        url=target_url,
+        data=json.dumps(order_data),
+        headers=headers
+```
+
+This method will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-store_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The _pizza-store_ sidecar will find the location of the _pizza-kitchen_ sidecar via a name resolution component. More info about different name resolution components can be found in the [Dapr docs](https://docs.dapr.io/reference/components-reference/supported-name-resolution/). The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
