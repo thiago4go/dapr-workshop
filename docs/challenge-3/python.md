@@ -1,8 +1,8 @@
-## Challenge 3 - Pub/Sub
+# Challenge 3 - Pub/Sub
 
 <img src="../../imgs/challenge-3.png" width=75%>
 
-### Overview
+## Overview
 
 In this challenge, the goal is to update the state store with all the events from our order. For that, you will:
 
@@ -26,7 +26,7 @@ Delivered
 
 To learn more about the Publish & subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
-### Create the Pub/Sub component
+## Create the Pub/Sub component
 
 Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
 
@@ -47,7 +47,7 @@ spec:
 
 Similar to our `statestore.yaml` file, this new definition creates a new component called _pizzapubsub_ of type _pubsub.redis_ pointing to our local Redis instance. Our apps will initialize this component to interact with it.
 
-### Create the subscription definition
+## Create the subscription definition
 
 Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following to it:
 
@@ -68,7 +68,7 @@ This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapub
 
 As a Dapr good practice, a _scope_ is added to this definition file. By setting `pizza-store` as the scope, it is guaranteed that this subscription rule will apply only to this service and will be ignored by others.
 
-### Installing the dependencies
+## Installing the dependencies
 
 Open a new terminal window and create another virtual enviroment:
 
@@ -83,7 +83,7 @@ Navigate to `/pizza-delivery` and run the command below to install the dependenc
 pip install -r requirements.txt
 ```
 
-### Creating the service
+## Creating the service
 
 Open `app.py`. Add the import statements below:
 
@@ -103,7 +103,7 @@ DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 ```
 
-### Creating the app route
+## Creating the app route
 
 Let's create the `/deliver` route that will tell the service to start a  delivery for the order. Below **# Application routes #** add the following:
 
@@ -147,7 +147,7 @@ def deliver(order_data):
     publish_event(order_data)
 ```
 
-#### Publishing the event
+## Publishing the event
 
 Now let's publish! You'll be using the Dapr SDK to submit the event to our PubSub. Under **# Dapr pub/sub #** add:
 
@@ -165,7 +165,7 @@ def publish_event(order_data):
 
 The Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
 
-#### Sending the Kitchen events
+## Sending the Kitchen events
 
 Open `python/pizza-kitchen` and add the following lines below the import statements:
 
@@ -214,7 +214,7 @@ def ready(order_data):
     return order_data
 ```
 
-#### Calling the delivery service
+## Calling the delivery service
 
 Going back to the _pizza-store_ service, update the imports to be:
 
@@ -259,7 +259,7 @@ def start_delivery(order_data):
     time.sleep(1)
 ```
 
-#### Publishing and subscribing to events
+## Publishing and subscribing to events
 
 First, change the `createOrder():` function to publish an event to the pub/sub. Replace the lines below:
 
@@ -286,7 +286,7 @@ with DaprClient() as client:
 
 With this, you are now replacing direct calls to `save_order` and `start_cook`  with a `publish_event` process. This will send the events to Redis (our Pub/Sub component). In the next step you will subscribe to these events and save them to the state store.
 
-#### Subscribing to events
+## Subscribing to events
 
 Let's create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
 
@@ -325,7 +325,7 @@ def orders_subscriber():
 The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, it is either sent to the _pizza-kitchen_ or to the _pizza-delivery_ service.
 
 
-#### Running the application
+## Running the application
 
 You now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them.
 
@@ -356,7 +356,7 @@ Check for the logs for all three services, you should now see the pubsub compone
 INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
-#### Testing the service
+## Testing the service
 
 Open a fourth terminal window and create a new order:
 
