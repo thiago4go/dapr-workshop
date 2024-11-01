@@ -6,7 +6,7 @@ import time
 import logging
 import random
 
-DAPR_PORT = 8002
+APP_PORT = 8002
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 
@@ -64,4 +64,4 @@ def startCooking():
 
     return jsonify({'success': True})
 
-app.run(port=DAPR_PORT)
+app.run(port=APP_PORT)
