@@ -1,5 +1,7 @@
 # Challenge 1 - State Store
 
+<img src="../../imgs/challenge-1.png" width=50% height=50%>
+
 ## Overview
 
 On our first challenge, we will:
