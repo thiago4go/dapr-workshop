@@ -26,19 +26,19 @@ You will build three microservices to simulate the process of ordering a pizza:
 
 You will start the workshop by creating the `pizza-store` service. It's responsible for creating a new pizza order and saving it to a Redis database, using the [Dapr State Management Building Block](https://docs.dapr.io/developing-applications/building-blocks/state-management/). You will learn how to create a Dapr Component specification, and how to use the Dapr SDK to save and retrieve an item using the State Store API.
 
-<img src="/imgs/challenge-1.png" width=50% height=50%>
+<img src="/imgs/challenge-1.png" width=50%>
 
 ### Challenge 2: Service Invocation
 
 This challenge will focus on synchronous communication between two services using the [Dapr Service Invocation Building Block](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/). After the pizza order is saved in the database, you will create another service responsible for cooking the pizza - the `pizza-kitchen` service. This service will have an endpoint that will be invoked directly from the `pizza-store` service.
 
-<img src="/imgs/challenge-2.png" width=50% height=50%>
+<img src="/imgs/challenge-2.png" width=50%>
 
 ### Challenge 3: Pub/Sub
 
 In the final challenge, you will create your third service, `pizza-delivery`. You will use the [Dapr Publish & Subscribe Building Block](https://docs.dapr.io/developing-applications/building-blocks/pubsub/) to publish events to a Redis Streams message broker. These events represent each stage in the pizza order and delivery process. For every event published, the `pizza-store` service will subscribe to it and update the current order status in the Redis State Store.
 
-<img src="/imgs/challenge-3.png" width=75% height=75%>
+<img src="/imgs/challenge-3.png" width=75%>
 
 ## Get started
 

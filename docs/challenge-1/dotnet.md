@@ -1,10 +1,10 @@
 # Challenge 1 - State Store
 
-<img src="../../imgs/challenge-1.png" width=50% height=50%>
+<img src="../../imgs/challenge-1.png" width=50%>
 
 ## Overview
 
-On our first challenge, we will:
+In this challenge, you will:
 
 - Configure a State Store component for our local Redis instance to save, get, and delete an order.
 - Update the _pizza-store_ application to use the Dapr State Management API.

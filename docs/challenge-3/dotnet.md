@@ -1,5 +1,7 @@
 # Challenge 3 - Pub/Sub
 
+<img src="../../imgs/challenge-3.png" width=75%>
+
 ## Overview
 
 On our third challenge, our goal will be to update the state store with all the events from our order. For that, we will:

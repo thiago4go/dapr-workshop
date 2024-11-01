@@ -1,5 +1,7 @@
 # Challenge 2 - Service Invocation
 
+<img src="../../imgs/challenge-2.png" width=50%>
+
 ## Overview
 
 In this challenge, you will send the order created in the previous step to the kitchen! For that, you will:
