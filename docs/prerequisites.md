@@ -51,7 +51,7 @@ docker ps
 
 ## Some considerations
 
-### Integrated terminal 
+### Integrated terminal
 
 During the workshop, you should be working with Visual Studio Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro, and on a Windows 11 laptop with the DevContainers.
 
@@ -113,14 +113,14 @@ INFO[0000] Initialized name resolution to consul ...
   
 <summary>Python</summary>
 
-On your terminal, run:
+In your terminal, run:
 
 ```bash
 git clone https://github.com/diagrid-labs/dapr-workshop-python.git
 cd dapr-workshop-python
 ```
 
-Open the `dapr-workshop-python` folder in VSCode. If you want to use the devcontainer option, select _Open in Container_ when VSCode shows this message.
+Open the `dapr-workshop-python` folder in VSCode. If you want to use the Python devcontainer, select _Open in Container_ when VSCode shows this message.
 
 If you're not using the devcontainer, install `virtualenv` first:
 
@@ -141,14 +141,14 @@ source env/bin/activate
   
 <summary>.NET</summary>
 
-On your terminal, run:
+In your terminal, run:
 
 ```bash
 git clone https://github.com/diagrid-labs/dapr-workshop-csharp.git
 cd dapr-worksop-csharp
 ```
 
-Open the `dapr-workshop-csharp` folder in VSCode. If you want to use the devcontainer option, select _Open in Container_ when VSCode shows this message.
+Open the `dapr-workshop-csharp` folder in VSCode. If you want to use the .NET devcontainer, select _Open in Container_ when VSCode shows this message.
 
 </details>
 
@@ -157,4 +157,4 @@ Open the `dapr-workshop-csharp` folder in VSCode. If you want to use the devcont
 Pick your programming language:
 
 - [Python](/docs/challenge-1/python.md)
-- [.NET](/docs/challenge-1/dotnet.md)
+- [C#/.NET](/docs/challenge-1/dotnet.md)
