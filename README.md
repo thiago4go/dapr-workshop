@@ -1,6 +1,6 @@
 # Dapr Workshop
 
-![Dapr sidecar](imgs/dapr_sidecar.png)
+![Dapr sidecar](imgs/dapr_sidecar_pixelart.png)
 
 Welcome to Diagrid's [Dapr](https://dapr.io/) Workshop! This repository contains a set of hands-on challenges designed to introduce you to Dapr's most popular APIs and give you a starting point to build your own distributed applications.
 
