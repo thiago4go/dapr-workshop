@@ -1,20 +1,22 @@
 # Challenge 1 - State Store
 
-<img src="../../imgs/challenge-1.png" width=50%>
-
 ## Overview
+
+> Ensure you have completed the [technical prerequisites](../prerequisites.md) before starting the challenges.
 
 In this challenge, you will:
 
-- Configure a State Store component for the local Redis instance to save, get, and delete an order.
-- Update the _pizza-store_ application to use the Dapr State Management API.
-- Run the app locally using `dapr run`.
+- Configure a State Store component using a local Redis instance to save, get, and delete a pizza order.
+- Update the `pizza-store` application to use the Dapr State Management API.
+- Run the app locally using the Dapr CLI.
 
-To learn more about the State Management Building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
+<img src="../../imgs/challenge-1.png" width=50%>
 
-## Configuring the state store
+To learn more about the Dapr State Management Building Block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
 
-Navigate to the `/resources` folder and create a new file called `statestore.yaml`. Add the content below to the file:
+## Configure the state store
+
+In your newly cloned `dapr-workshop-python` repository, navigate to the `/resources` folder and create a new file called `statestore.yaml`. Add the content below to the file:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -31,17 +33,17 @@ spec:
     value: ""
 ```
 
-This is a component definition file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state.redis` and the metadata contains host and password information for the Redis instance that was deployed as a container during Dapr's initialization process.
+This is a Dapr Component specification file named `pizzastatestore`. In the _spec_ definition, note that the type of the component is `state.redis` and the metadata contains host and password information for the local Redis instance that was deployed as a container during Dapr's initialization process.
 
-## Installing the dependencies
+## Install dependencies
 
-Now navigate to the `/pizza-store` folder and run the command below to install the dependencies:
+Now navigate to the `/pizza-store` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Creating the service
+## Create the service
 
 Open `/pizza-store/app.py`. Notice the two import lines, let's add a couple more libraries there:
 
@@ -55,11 +57,11 @@ import logging
 import json
 ```
 
-You are now importing _DaprClient_ from _dapr.clients_. That's what will be used to manage the state in the Redis instance.
+This will import _DaprClient_ from _dapr.clients_. That is what you will use to manage the state in the Redis instance.
 
-## Managing state
+## Manage state
 
-Let's create three new functions: `save_order`, `get_order`, and `delete_order`.
+Create three new functions: `save_order`, `get_order`, and `delete_order`.
 
 Start by creating a const that refers to the state store component:
 
@@ -97,15 +99,17 @@ def delete_order(order_id):
         return order_id
 ```
 
-1. `client.save_state(DAPR_STORE_NAME, order_id, str(order_data))` saves the state the Redis using a key/value pair. It requires the state store name, the order id as a **key**, and a json representation of the order as a **value**.
+The Dapr Client is responsible for the following, respectively:
 
-2. `result = client.get_state(DAPR_STORE_NAME, order_id)` retrieves the state from the store. It requires a key and the state store name.
+1. `client.save_state(DAPR_STORE_NAME, order_id, str(order_data))`; saves the state the Redis using a key/value pair. It requires the state store name, the order id as a **key**, and a json representation of the order as a **value**.
 
-3. `client.delete_state(DAPR_STORE_NAME, order_id)` deletes the state from the store. It also requires a key and the state store name.
+2. `result = client.get_state(DAPR_STORE_NAME, order_id)`; retrieves the state from the store. It requires a key and the state store name.
 
-## Creating the app routes
+3. `client.delete_state(DAPR_STORE_NAME, order_id)`; deletes the state from the store. It also requires a key and the state store name.
 
-Before testing the application, you need to create routes so you are able to manage the state by calling REST APIs directly. Add three new routes below **# Application routes #**:
+## Create the app routes
+
+Before testing the application, create routes to be used by the state store from the frontend and to call the REST APIs directly. Add three new routes below **# Application routes #**:
 
 ```python
 # Create a new order
@@ -146,11 +150,11 @@ def deleteOrder(order_id):
     return jsonify({'success': False, 'message': 'Missing order id'}), 404
 ```
 
-To save the event a new order UUID is generated and a new event _Sent to Kitchen_ is set. These events will be used during the next challenges.
+To save the event a new order UUID is generated and set a new event: _Sent to Kitchen_. You will use these events in upcoming challenges.
 
-## Running the application
+## Run the application
 
-Now, open a terminal and navigate to the `/pizza-store` folder where `app.py` is located. Run the following command:
+Now, open a terminal and navigate to the `/pizza-store` folder where `app.py` is located. Use the Dapr CLI to run the following command:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
@@ -160,35 +164,35 @@ dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-po
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
 This command sets:
-    - an app-id `pizza-store` to the application
-    - the app-protocol `http`
-    - an  app-port `8001` for external communication and and http-port `3501` for sidecar communication
-    - the resources-path, where the state store component definition file is locatated. This will guarantee that the component is loaded once the app initializes.
+    - the app-id as `pizza-store`
+    - the app-protocol to `http`
+    - an app-port of `8001` for Dapr communication into the app
+    - an http-port of `3501` for Dapr API communication from the app
+    - the resources-path, where the state store component definition file is located. This will guarantee that the Redis component is loaded when the app initializes.
 
-Look for the log entry below to guarantee that the state store was loaded successfully:
+Look for the log entry below to guarantee that the state store component was loaded successfully:
 
 ```bash
 INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
-## Testing the service
+## Test the service
 
-### Create an order
+### Use VS Code REST Client
 
-Open `PizzaStore.rest` and place a new order by clicking the button `Send request` under _#Place a new order_:
+Open the `PizzaStore.rest` file located in the root of the repository and place a new order by clicking the button `Send request` under _Place a new order_:
 
 ![send-request](/imgs/rest-request.png)
 
-Once an order is posted, the Order ID is extracted from the response body and assigned to the @order-id variable:
+Once an order is posted, the _Order ID_ is extracted from the response body and assigned to the @order-id variable:
 
 ```bash
 @order-id={{postRequest.response.body.orderId}}
 ```
-So you can immediately do a `GET` or `DELETE` request with the correct Order ID.
 
-To retrieve and delete the order, run the corresponding requests.
+This allows you to immediately run a `GET` or `DELETE` request with the correct _Order ID_. To retrieve and delete the order, run the corresponding requests.
 
-#### Alternatively, you can use _cURL_ to call the endpoints
+#### Use _cURL_
 
 Run the command below to create a new order.
 
@@ -199,11 +203,7 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders
 ```
 
-If you downloaded Redis Insight, you can visualize the new entry there:
-
-![redis-insight](/imgs/redis-insight.png)
-
-Take note of the new order-id generated and run the following command to get the newly created order:
+Copy the order-id generated and run the following command to get the newly created order:
 
 ```bash
 curl -H 'Content-Type: application/json' \
@@ -211,7 +211,7 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders/<order-id>
 ```
 
-Finally, to delete the order:
+Finally, delete the order:
 
 ```bash
 curl -H 'Content-Type: application/json' \
@@ -219,6 +219,12 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders/<order-id>
 ```
 
-## Next 
+### Visualize the data
 
-Let's create a new service to help us cook the pizza to your customers. On the next challenge, you will learn how to create a new endpoint and how to invoke it using Dapr. When you are ready, move to Challenge 2: [Service Invocation](/docs/challenge-2/python.md)!
+If you downloaded Redis Insight, you can visualize the new order there:
+
+![redis-insight](/imgs/redis-insight.png)
+
+## Next steps
+
+Create a new service to cook the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2:: [Service Invocation](/docs/challenge-2/python.md)!
