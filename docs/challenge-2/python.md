@@ -1,17 +1,17 @@
 # Challenge 2 - Service Invocation
 
-<img src="../../imgs/challenge-2.png" width=50%>
-
 ## Overview
 
-In this challenge, you will send the order created in the previous step to the kitchen! For that, you will:
+In this challenge, you will send the order created in the previous step to be cooked in the kitchen. For that, you will:
 
 - Create a new service called _pizza-kitchen_ with a `/cook` endpoint.
-- Update _pizza-store_ to invoke the `/cook` endpoint with the Service Invocation API.
+- Update `pizza-store` to invoke the `/cook` endpoint using the Dapr Service Invocation API.
 
-To learn more about the Service Invocation API, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
+<img src="../../imgs/challenge-2.png" width=50%>
 
-### Installing the dependencies
+To learn more about the Dapr Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
+
+### Install the dependencies
 
 Open a new terminal window and create another virtual environment:
 
@@ -20,15 +20,15 @@ python -m venv env
 source env/bin/activate
 ```
 
-Navigate to `/pizza-kitchen` and run the command below to install the dependencies:
+Navigate to the `/pizza-kitchen` directory. Before you start coding, install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Creating the service
+## Create the service
 
-Open `app.py`. Add the import statements below:
+Open `app.py`. Add these import statements:
 
 ```python
 from flask import Flask, request, jsonify
@@ -40,9 +40,9 @@ import logging
 import random
 ```
 
-## Creating the app route
+## Create the app route
 
-Let's create a route that will tell the kitchen to start cooking the pizza `/cook`. Below **# Application routes #** add the following:
+Create the route `/cook` that will tell the kitchen to start cooking the pizza. Below **# Application routes #** add the following code:
 
 ```python
 @app.route('/cook', methods=['POST'])
@@ -61,9 +61,9 @@ def startCooking():
     return jsonify({'success': True})
 ```
 
-This route is fairly simple. It is a POST endpoint that accepts the `order` content created in the last challenge. The order is updated with status events _Cooking_ and _Ready for delivery_.
+This function is fairly simple. It takes in a POST request with the `order` content created in the previous challenge. The order preparation is started and marked as ready with two helper functions. In these functions the order is updated with status events _Cooking_ and _Ready for delivery_.
 
-Add two helper functions to modify the order for these events:
+Add two helper functions to set the order to a status of _Cooking_ and _Ready for delivery_:
 
 ```python
 def start(order_data):
@@ -83,11 +83,11 @@ def ready(order_data):
     return order_data
 ```
 
-## Calling the app route
+## Call the app route
 
-Let's go back to the _pizza-store_ service. You will create a Service Invocation action to call the `/cook` endpoint from the _pizza-kitchen_ service.
+Navigate back to the _pizza-store_ service. Construct a Dapr Service Invocation call to the `/cook` endpoint on the _pizza-kitchen_ service.
 
-First, update the `createOrder()` function, add the following line after the `save_order((order_id, order_data))` invocation:
+First, update the `createOrder()` function by adding the following line after the `save_order((order_id, order_data))` invocation:
 
 ```python
  # Start cooking
@@ -114,7 +114,7 @@ def start_cook(order_data):
     print('result: ' + response.text, flush=True)
 ```
 
-Let's break down the code above.
+Breaking down the code above:
 
 1. First the HTTP headers are defined:
 
@@ -141,15 +141,15 @@ This starts with localhost, since the _pizza-store_ Dapr sidecar is running ther
         headers=headers
 ```
 
-This method will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-store_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The _pizza-store_ sidecar will find the location of the _pizza-kitchen_ sidecar via a name resolution component. More info about different name resolution components can be found in the [Dapr docs](https://docs.dapr.io/reference/components-reference/supported-name-resolution/). The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+This method will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-store_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The responsiblity of making the service invocation call is then passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
-With this, services only need to communicate to sidecars through localhost and the sidecar handles the discovery capabilities.
+This way, services only need to communicate to their associated sidecar over localhost and the sidecar handles the service discovery and invocation capabilities.
 
-## Running the application
+## Run the application
 
-You now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-store_, ensure you're still in the _pizza-store_ folder where `app.py` is located and run the command below:
+It's now time to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-store_, ensure you're still in the _pizza-store_ folder where `app.py` is located and run the command below:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
@@ -164,24 +164,15 @@ dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
-## Testing the service
+## Test the service
 
-### Create an order
+### Use VS Code REST Client
 
-Open `PizzaStore.rest` and place a new order by clicking the button `Send request` under _Place a new order_:
-
-![send-request](/imgs/rest-request.png)
+Open `PizzaStore.rest` and create a new order, similar to what was done on the first challenge.
 
 ### Alternatively, open a third terminal window and create a new order:
 
 Open a third terminal window and create a new order:
-
-```bash
-curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
-    -X POST \
-    http://localhost:8001/orders
-```
 
 Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
 
@@ -191,6 +182,17 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 == APP == INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 20:48:48] "POST /cook HTTP/1.1" 200 -
 ```
 
-## Next
+### Use  _cURL_
 
-You probably noticed that the event information is updated with every step in the application, but it is not getting saved to the Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/python.md)!
+Alternatively, open another terminal window and create a new order via cURL:
+
+```bash
+curl -H 'Content-Type: application/json' \
+    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -X POST \
+    http://localhost:8001/orders
+```
+
+## Next Steps
+
+Now that the services are updating the event information for every order step, you need to make sure that this information is being updated in the Redis state store. You will do this in the next challenge using Dapr [Pub/Sub](/docs/challenge-3/python.md)!
