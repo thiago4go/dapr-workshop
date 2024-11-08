@@ -1,29 +1,30 @@
 # Prerequisites
 
-## Download and install the following dependencies
+## Dependencies
+
+Download and install the following locally:
 
 - [Docker](https://docs.docker.com/engine/install/)
 - [Visual Studio Code](https://code.visualstudio.com/download)
 
-If you use the devcontainer configuration for the .NET or Python repository, you don't need anything else, since everything is part of the devcontainer already. You can continue to the [Some Considerations](#some-considerations) section.
+If you use the [devcontainer](https://containers.dev/) configuration for the .NET or Python workshop challenges, you don't need anything else, since everything is already part of the devcontainer. Continue to the [Considerations](#considerations) section.
 
-If you're **not** using the devcontainer option please also install:
+If you're **not** using the devcontainer option you will also need to install:
 
 - [REST Client for VS Code](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
-- Optional to visualize Redis data: [Database CLient for VSCode](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-database-client2) or [Redis Insights](https://redis.io/insight/) 
-- [Powershell(for Windows users)](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4)
+- [Database Client for VSCode](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-database-client2) or [Redis Insight](https://redis.io/insight/) (optional to visualize Redis data)
+- [Powershell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) (for Windows users)
+
+Today the workshop is offered in two languages, Python and Java. For the language of your choice you will also need to install the following:
 
 <details>
-
 <summary>Python</summary>
 
 - [Python 3](https://www.python.org/downloads/)
 - [Python Extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 
 </details>
-
 <details>
-
 <summary>.NET</summary>
 
 - [dotnet 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
@@ -31,7 +32,7 @@ If you're **not** using the devcontainer option please also install:
 
 </details>
 
-## Install Dapr
+## Dapr Installation
 
 1. Follow [these steps](https://docs.dapr.io/getting-started/install-dapr-cli/) to install the Dapr CLI.
 
@@ -41,7 +42,7 @@ If you're **not** using the devcontainer option please also install:
 dapr init
 ```
 
-3. Verify if local containers are running:
+3. Verify if local Dapr containers are running:
 
 ```bash
 docker ps
@@ -49,17 +50,17 @@ docker ps
 
 ![containers](./../imgs/docker-ps.png)
 
-## Some considerations
+## Considerations
 
 ### Integrated terminal
 
-During the workshop, you should be working with Visual Studio Code. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro, and on a Windows 11 laptop with the DevContainers.
+It is recommended to use Visual Studio Code to run the workshop. You will use the integrated terminal in VS Code extensively. All terminal commands have been tested on a Apple M3 Pro, and on a Windows 11 laptop using DevContainers.
 
 ### Prevent port collisions
 
-During the workshop you will run the services in the solution on your local machine. To prevent port-collisions, all services listen on a different HTTP port. When running the services with Dapr, you need additional ports for HTTP and gRPC communication with the sidecars. If you follow the instructions, the services will use the following ports for their Dapr sidecars to prevent port collisions:
+During the workshop you will run the services in the solution on your local machine. To prevent port-collisions, all services listen on a different HTTP port. When running the services with Dapr, you need additional ports for HTTP and gRPC communication with the sidecars. If you follow the Dapr CLI instructions, the services will use the following ports for their Dapr sidecars to prevent port collisions:
 
-| Service                    | Application Port | Dapr sidecar HTTP port  |
+| Service                    | Application port | Dapr sidecar HTTP port  |
 |----------------------------|------------------|------------------------|
 | pizza-store      | 8001             | 3501                   |
 | pizza-kitchen      | 8002             | 3502                  |
@@ -82,7 +83,7 @@ dism.exe /Online /Enable-Feature:Microsoft-Hyper-V /All
 
 ### Running self-hosted on MacOS with VPN/Firewalls enabled
 
-Some antivirus software blocks mDNS (we've actually encountered this with Sophos). mDNS is used for name-resolution by Dapr when running in self-hosted mode. Blocking mDNS will cause issues with service invocation. When you encounter any errors when invoking services using service invocation, use Consul as an alternative name resolution service.
+Some antivirus software blocks mDNS (we've actually encountered this with Sophos). mDNS is used for name-resolution by Dapr when running locally in self-hosted mode. Blocking mDNS will cause issues with service invocation. If you encounter any errors when invoking services using service invocation, use HashiCorp Consul as an alternative name resolution service.
 
 Run the following command line to initialize Consul:
 
@@ -96,7 +97,7 @@ Then, when you finish all challenges, run:
 docker rm dtc-consul -f
 ```
 
-You can verify whether Consul is used for name-resolution by searching for the occurrence of the following line in the Dapr logging:
+You can verify whether Consul is used for name-resolution by searching for the occurrence of the following line in the Dapr sidecar logging:
 
 ```bash
 ℹ️  Starting Dapr with id pizza-kitchen. HTTP Port: 3502.
@@ -105,9 +106,9 @@ INFO[0000] Initialized name resolution to consul ...
 ...
 ```
 
-## Let's get to coding
+## Getting started
 
-### Clone the repository and initialize the environment
+Initialize your environment in your language of choice.
 
 <details>
   
@@ -152,9 +153,7 @@ Open the `dapr-workshop-csharp` folder in VSCode. If you want to use the .NET de
 
 </details>
 
-### Start the first challenge
-
-Pick your programming language:
+You are now ready to begin the first challenge! Choose your path below:
 
 - [Python](/docs/challenge-1/python.md)
 - [C#/.NET](/docs/challenge-1/dotnet.md)

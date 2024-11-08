@@ -1,12 +1,10 @@
 # Challenge 3 - Pub/Sub
 
-<img src="../../imgs/challenge-3.png" width=75%>
-
 ## Overview
 
-On our third challenge, our goal will be to update the state store with all the events from our order. For that, we will:
+In the third challenge, the goal is to update the state store with all the events from pizza order. For that, you will:
 
-- Update our order with the following event states:
+- Update the order with the following event states:
 
 ```text
 Sent to kitchen
@@ -20,15 +18,17 @@ Delivered
 ```
 
 - Create a new service called _pizza-delivery_ which is responsible for... delivering the pizza :).
-- Send all the events from our order to our new component: Pub/Sub.
-- Update _pizza-kitchen_ and _pizza-store_ to publish events to our Pub/Sub using the Dapr SDK.
-- Create a _subscription_ definition and with a route in our _pizza-store_ to save all the events to Redis.
+- Send the events containing the state of the order to the new Dapr component, a pub/sub message broker.
+- Update _pizza-kitchen_ and _pizza-store_ to publish events to the Pub/Sub using the Dapr SDK.
+- Create a _subscription_ definition route in the _pizza-store_ to save all the state events to the state store.
 
-To learn more about the Publish & subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
+<img src="../../imgs/challenge-3.png" width=75%>
+
+To learn more about the Publish & Subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
 ## Create the Pub/Sub component
 
-Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
+Open the `/resources` folder and create a file called `pubsub.yaml`. Add the following content:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -45,11 +45,11 @@ spec:
     value: ""
 ```
 
-Similar to our `statestore.yaml` file, this new definition creates a new component called _pizzapubsub_ of type _pubsub.redis_ pointing to our local Redis instance. Our apps will initialize this component to interact with it.
+Similar to the `statestore.yaml` file, this new definition creates a Dapr component called _pizzapubsub_ of type _pubsub.redis_ pointing to the local Redis instance, using Redis Streams. Each app will initialize this component to interact with it.
 
-## Create the subscription definition
+## Create a subscription
 
-Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following to it:
+Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following content to it:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -64,20 +64,18 @@ scopes:
 - pizza-store  
 ```
 
-This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be forwarded to a route called `/events`. This endpoint needs to be created in the `pizza-store` service.
+This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/events` on the scoped `pizza-store` service. By setting `pizza-store` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/events` endpoint needs to be created in the `pizza-store` service in order to receive the events.
 
-As a Dapr good practice, we are also introducing a _scope_ to this definition file. By setting `pizza-store` as our scope, we guarantee that this subscription rule will apply only to this service and will be ignored by others.
+## Install the dependencies
 
-## Installing the dependencies
-
-Navigate to `/PizzaDelivery`. Before start coding, let's install our Dapr dependencies.
+Navigate to `/PizzaDelivery`. Before you start coding, install the Dapr dependencies.
 
 ```bash
 cd PizzaDelivery
 dotnet add package Dapr.Client
 ```
 
-## Registering the DaprClient
+## Register the DaprClient
 
 Open `Program.cs` and add this using statement to the top:
 
@@ -93,9 +91,9 @@ builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
 
 This enables the dependency injection of the `DaprClient` in other classes.
 
-## Creating the service
+## Create the service
 
-Open `/Controllers/PizzaDeliveryController.cs` Let's add a couple of import statements.
+Open `/Controllers/PizzaDeliveryController.cs` and add the following import statements.
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -118,9 +116,9 @@ public PizzaDeliveryController(DaprClient daprClient, ILogger<PizzaDeliveryContr
     }
 ```
 
-## Creating the app route
+## Create the app route
 
-Leet's create our route `/deliver` that will tell the service to start a  delivery for our order. Below **// -------- Application routes -------- //** add the following:
+Create the route `/deliver` that will instruct the service to start a  delivery for the pizza order. Below **// -------- Application routes -------- //** add the following code:
 
 ```csharp
 // App route: Post order
@@ -142,7 +140,7 @@ public async Task<ActionResult> PostOrder([FromBody] Order order)
 }
 ```
 
-Under **// -------- Dapr Pub/Sub -------- //** create a new function called `StartDelivery`. This will simply take our order and update it with multiple events, adding a small delay in between calls:
+Under **// -------- Dapr Pub/Sub -------- //** create a new function called `StartDelivery`. This will take the order and update it with multiple events, adding a small delay in between calls:
 
 ```csharp
 private async Task StartDelivery(Order order)
@@ -170,16 +168,16 @@ private async Task StartDelivery(Order order)
 }
 ```
 
-## Publishing the event
+## Publish the event
 
-Now let's publish using Dapr! Add the following lines to the controller class to define the Pub/Sub component and topic names:
+Now its time to publish the events using Dapr! Add the following lines into the controller class to define the Pub/Sub component and topic names:
 
 ```csharp
 private readonly string PubSubName = "pizzapubsub";
 private readonly string TopicName = "order";
 ```
 
-We will use the Dapr SDK to submit the event to our PubSub. Under **// -------- Dapr Pub/Sub -------- //** add:
+Use the Dapr SDK to submit the event to the message broker. Under **// -------- Dapr Pub/Sub -------- //** add:
 
 ```csharp
 public async Task<IActionResult> PublishEvent(Order order)
@@ -198,11 +196,11 @@ public async Task<IActionResult> PublishEvent(Order order)
 }
 ```
 
-The code above uses the Dapr SDK to publish an event to our PubSub infrastructure (Redis). That event is the `order` in json format.
+The code above uses the Dapr SDK to publish an event to the PubSub infrastructure (Redis). That event is the `order` in json format.
 
-Our Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
+The `delivery-service` is now completed. Update _pizza-kitchen_ and _pizza-store_ now.
 
-## Registering the DaprClient for PizzaKitchen
+## Register the DaprClient for PizzaKitchen
 
 Navigate to the `/PizzaKitchen` folder, open `Program.cs` and add this using statement to the top:
 
@@ -218,7 +216,7 @@ builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
 
 This enables the dependency injection of the DaprClient in other classes.
 
-## Sending the Kitchen events
+## Send the Kitchen events
 
 Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and create a private field for the `DaprClient` inside the controller class:
 
@@ -243,7 +241,7 @@ private readonly string PubSubName = "pizzapubsub";
 private readonly string TopicName = "order";
 ```
 
-Under **// -------- Dapr Pub/Sub -------- //**, add the following lines to send our event to the pub/sub:
+Under **// -------- Dapr Pub/Sub -------- //**, add the following lines to send the order event to the message broker:
 
 ```csharp
 public async Task<IActionResult> PublishEvent(Order order)
@@ -261,7 +259,7 @@ public async Task<IActionResult> PublishEvent(Order order)
 }
 ```
 
-Now, Update the `StartCooking` and the `ReadyForDelivery` functions by adding a call to our `PublishEvent`:
+Now, Update the `StartCooking` and the `ReadyForDelivery` functions by adding a call to the `PublishEvent` function:
 
 ```csharp
 private async Task StartCooking(Order order)
@@ -290,16 +288,16 @@ private async Task ReadyForDelivery(Order order)
 }
 ```
 
-## Calling the delivery service
+## Call the delivery service
 
-Going back to the `PizzaStoreController` class in the _pizza-store_ service add the following readyonly strings referencing our pub/sub and the topic we will publish to:
+Going back to the `PizzaStoreController` class in the _pizza-store_ service add the following ready-only strings referencing the pub/sub component and the topic will be published to:
 
 ```csharp
 private readonly string PubSubName = "pizzapubsub";
 private readonly string TopicName = "order";
 ```
 
-Now, let's add a new service invocation function under **// -------- Dapr Service Invocation -------- //**. This is the same process from the second challenge, but now we are sending the order to our _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
+Add a new service invocation function under **// -------- Dapr Service Invocation -------- //**. This is the same process from the second challenge, but now you will be sending the order to the _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This begins the order delivery:
 
 ```csharp
 private async Task Deliver(Order order)
@@ -311,9 +309,9 @@ private async Task Deliver(Order order)
 }
 ```
 
-## Publishing and subscribing to events
+## Publish events
 
-First, let's change our `PostOrder():` function to publish an event to our pub/sub. Replace the line below:
+Change the `PostOrder():` function to publish an event to the pub/sub broker. Replace the lines below:
 
 ```csharp
 // Save order to state store
@@ -323,7 +321,7 @@ await SaveOrderToStateStore(order);
 await Cook(order);
 ```
 
-By:
+With the following code block:
 
 ```csharp
 // create metadata
@@ -332,13 +330,13 @@ var metadata = new Dictionary<string, string> { { "Content-Type", "application/j
 await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
 ```
 
-With this, we are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to Redis(our Pub/Sub component). In the next step we will subscribe to these events and save them to our state store.
+With this, you are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to the Redis Pub/Sub component. In the next step you will subscribe to these events and save them to the state store.
 
-## Subscribing to events
+## Subscribe to events
 
-Let's create the route `/events` in the _pizza-store_ service. This route was previously specified in our `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
+Create the route `/events` in the _pizza-store_ service. This route was previously specified in the `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
 
-Under **// -------- Dapr Pub/Sub -------- //** include:
+Under **// -------- Dapr Pub/Sub -------- //** add the following:
 
 ```csharp
 [HttpPost("/events")]
@@ -372,23 +370,23 @@ public async Task<IActionResult> Process([FromBody] JsonDocument rawTransaction)
 }
 ```
 
-The code above picks up the order from the topic, deserializes it saves it to the state store. Based on the type of event, we either send the event to the kitchen or to the delivery service.
+The code above picks up the order from the topic, deserializes it saves it to the state store using Dapr. Based on the type of event, we either send the event to the kitchen or to the delivery service.
 
-## Running the application
+## Run the application
 
-We now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
+It's time to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In the terminal, navigate to the folder where the _pizza-store_ service located and run the command below:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
-Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
+Open a new terminal window and navigate to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
 ```
 
-Finally, open a  third terminal window and navigate to the _pizza-delivery_ service folder. Run the command below:
+Finally, open a third terminal window and navigate to the _pizza-delivery_ service folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources  -- dotnet run
@@ -397,17 +395,19 @@ dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
 
-Check for the logs for all three services, you should now see the pubsub component loaded:
+Check the Dapr and application logs for all three services. You should now see the pubsub component loaded in the Dapr logs:
 
 ```bash
 INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
-## Testing the service
+## Test the service
+
+### Use VS Code REST Client
 
 Open `PizzaStore.rest` and create a new order, similar to what was done previous challenges.
 
-Navigate to the _pizza-store_ terminal, you should see the following logs pop up with all the events being updated:
+Navigate to the _pizza-store_ terminal, where you should see the following logs pop up with all the events being updated:
 
 ```bash
 == APP == Posting order: 
@@ -431,10 +431,9 @@ Navigate to the _pizza-store_ terminal, you should see the following logs pop up
 == APP == Returned: OK
 ```
 
+### Use _cURL_
 
-#### Alternatively, you can use _cURL_ to call the endpoints
-
-Open a fourth terminal window and create a new order:
+Open a fourth terminal window and create a new order using cURL:
 
 ```bash
 curl -H 'Content-Type: application/json' \
@@ -443,9 +442,9 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders
 ```
 
-## Running the front-end application
+## Run the front-end application
 
-Now that you've completed all the challenges, let's order a pizza using the UI.
+Now that you've completed all the challenges, its time to order a pizza using the UI.
 
 With all services still running, navigate to `/pizza-frontend`, open a new terminal, and run:
 
@@ -453,7 +452,7 @@ With all services still running, navigate to `/pizza-frontend`, open a new termi
 python3 -m http.server 8080
 ```
 
-Open a browser window and navigate to `localhost:8080`, fill-out your order on the right-hand side and press `Place Order`. All the events will pop-up at the bottom for you.
+Open a browser window and navigate to `localhost:8080`, fill-out your order on the right-hand side and click `Place Order`. All the events will pop-up at the bottom for you.
 
 ![front-end](/imgs/front-end.png)
 
@@ -461,7 +460,7 @@ Open a browser window and navigate to `localhost:8080`, fill-out your order on t
 
 Instead of opening multiple terminals to run the services, you can take advantage of a great Dapr CLI feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/). This enables you run all three services with just one command!
 
-On the parent folder, create a new file called `dapr.yaml`. Add the following content to it:
+In the parent folder, create a new file called `dapr.yaml`. Add the following content to it:
 
 ```yaml
 version: 1
@@ -495,7 +494,6 @@ dapr run -f .
 
 All three services will run at the same time and log events at the same terminal window.
 
----
+## Next steps
 
-[Next: Challenge completion & reward](../completion.md)
-
+Congratulations, you have completed all the challenges and you can claim your [reward](../completion.md)!
