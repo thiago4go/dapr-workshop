@@ -127,7 +127,7 @@ This way, services only need to communicate to their associated sidecar over loc
 
 ## Run the application
 
-It's not time to run both applications. If the _pizza-store_ service is still running, use **CTRL+C** to stop it. In your terminal, ensure you are in the folder where the _pizza-store_ app is located and run the command below:
+It's now time to run both applications. If the _pizza-store_ service is still running, use **CTRL+C** to stop it. In your terminal, ensure you are in the folder where the _pizza-store_ app is located and run the command below:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
