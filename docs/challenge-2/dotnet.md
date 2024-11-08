@@ -57,7 +57,7 @@ public async Task<ActionResult> PostOrder([FromBody] Order order)
 }
 ```
 
-This function is fairly simple. It takes in a POST request with the `order` content created in the previous challenge. On receiving a request, the method will start the order and, after it is cooked, will send an event signalling that it is ready.
+This function is fairly simple. It takes in a POST request with the `order` content created in the previous challenge. The order preparation is started and marked as ready with two helper functions. In these functions the order is updated with status events _Cooking_ and _Ready for delivery_.
 
 Add two helper functions to set the order to a status of _Cooking_ and _Ready for delivery_.
 
