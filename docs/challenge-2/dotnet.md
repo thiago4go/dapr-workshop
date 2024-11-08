@@ -1,37 +1,37 @@
 # Challenge 2 - Service Invocation
 
-<img src="../../imgs/challenge-2.png" width=50%>
-
 ## Overview
 
-On our second challenge, we will send the order created in the previous step to the kitchen! For that, we will:
+In this challenge, you will send the order created in the previous step to be cooked in the kitchen. For that, you will:
 
 - Create a new service called _pizza-kitchen_ with a `/cook` endpoint.
-- Update _pizza-store_ to invoke the `/cook` endpoint with the Service Invocation building block.
+- Update `pizza-store` to invoke the `/cook` endpoint using the Dapr Service Invocation API.
 
-To learn more about the Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
+<img src="../../imgs/challenge-2.png" width=50%>
 
-## Installing the dependencies
+To learn more about the Dapr Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
 
-Navigate to `/PizzaKitchen`. Before start coding, let's install our Dapr dependencies.
+## Install the dependencies
+
+Navigate to the `/PizzaKitchen` directory. Before you start coding, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
 cd PizzaKitchen
 dotnet add package Dapr.Client
 ```
 
-## Creating the service
+## Create the service
 
-Open `/Controllers/PizzaKitchenController.cs` Let's add a couple of import statements.
+Open `/Controllers/PizzaKitchenController.cs`. Add a couple of import statements:
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
 ```
 
-## Creating the app route
+## Create the app route
 
-Leet's create our route that will tell the kitchen to start cooking the pizza `/cook`. Below **// -------- Application routes -------- //** add the following:
+Create the route `/cook` that will tell the kitchen to start cooking the pizza. Below **// -------- Application routes -------- //** add the following code:
 
 ```csharp
 // App route: Post order
@@ -57,9 +57,9 @@ public async Task<ActionResult> PostOrder([FromBody] Order order)
 }
 ```
 
-This route is fairly simple. It is a POST request with the `order` content created in the last challenge. We will start the order and, after it is cooked, we will say it is ready.
+This function is fairly simple. It takes in a POST request with the `order` content created in the previous challenge. On receiving a request, the method will start the order and, after it is cooked, will send an event signalling that it is ready.
 
-Add two helper functions to modify the order to _Cooking_ and to _Ready for delivery_.
+Add two helper functions to set the order to a status of _Cooking_ and _Ready for delivery_.
 
 ```csharp
 private async Task StartCooking(Order order)
@@ -82,11 +82,11 @@ private async Task ReadyForDelivery(Order order)
 }
 ```
 
-## Calling the app route
+## Call the app route
 
-Let's go back to the _pizza-store_ service. We will create a Service Invocation action to call the `/cook` endpoint from our _pizza-kitchen_ service.
+Navigate back to the _pizza-store_ service. Construct a Dapr Service Invocation call to the `/cook` endpoint on the _pizza-kitchen_ service.
 
-First, update the `PostOrder()` function, add the following line after the `await SaveOrderToStateStore(order);` invocation:
+First, update the `PostOrder()` function by adding the following line after the `await SaveOrderToStateStore(order);` invocation:
 
 ```csharp
 // Start cooking
@@ -105,35 +105,35 @@ private async Task Cook(Order order)
 }
 ```
 
-Let's break down the code above.
+Breaking down the code above:
 
-1. First are using the `DaprClient` to create an HttpClient Invocation object with the app id of the service we want to invoke:
+1. First the `DaprClient` is used to create an HttpClient Invocation object with the Dapr app id of the service you want to invoke:
 
 ```csharp
 var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-kitchen");
 ```
 
-The code above wraps an http call to the host `localhost` with the port `3501`. This is not calling the _pizza-kitchen_ service directly, but the sidecar of the _pizza-store_ service. The responsiblity of making the service invocation is passed to the sidecar, as the picture below illustrates:
+The code above wraps an HTTP call to the host `localhost` with the port `3501`. This is not calling the _pizza-kitchen_ service directly, but rather the sidecar of the _pizza-store_ service. The responsibility of making the service invocation call is then passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
-2. Then, we make the call to the endpoint `/cook`, passing our _order_ as the body of the POST request:
+2. Then, you make the call to the endpoint `/cook`, passing the _order_ as the body of the POST request:
 
 ```csharp
 var response = await client.PostAsJsonAsync("/cook", order, cancellationToken: CancellationToken.None);
 ```
 
-With this, services only need to communicate to sidecars through localhost and the sidecar handles the discovery capabilities.
+This way, services only need to communicate to their associated sidecar over localhost and the sidecar handles the service discovery and invocation capabilities.
 
-## Running the application
+## Run the application
 
-We now need to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In your terminal, navigate to the folder where the _pizza-store_ `app.py` is located and run the command below:
+It's not time to run both applications. If the _pizza-store_ service is still running, use **CTRL+C** to stop it. In your terminal, ensure you are in the folder where the _pizza-store_ app is located and run the command below:
 
 ```bash
 dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
-Open a new terminal window and mode to the _pizza-kitchen_ folder. Run the command below:
+Open a new terminal window and navigate to the _pizza-kitchen_ folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
@@ -142,11 +142,13 @@ dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
 
-## Testing the service
+## Test the service
 
-Open `PizzaStore.rest` and create a new order, similar to what was done on our first challenge.
+### Use VS Code REST Client
 
-Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop up:
+Open `PizzaStore.rest` and create a new order, similar to what was done on the first challenge.
+
+Navigate to the _pizza-kitchen_ terminal, where you should see the following logs:
 
 ```zsh
 == APP == Cooking order: 1393ff15-10fa-4a71-ad23-851157f9f748
@@ -154,7 +156,9 @@ Navigate to the _pizza-kitchen_ terminal, you should see the following logs pop 
 == APP == Order ready for delivery: 1393ff15-10fa-4a71-ad23-851157f9f748
 ```
 
-### Alternatively, open a third terminal window and create a new order:
+### Use _cURL_
+
+Alternatively, open a third terminal window and create a new order via cURL:
 
 ```bash
 curl -H 'Content-Type: application/json' \
@@ -163,6 +167,6 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders
 ```
 
-## Next
+## Next steps
 
-You may have noticed that we are updating the event information on every new step we take, but it is not getting saved to our Redis state store. Let's fix this in the next challenge: [Pub/Sub](/docs/challenge-3/dotnet.md)!
+Now that the services are updating the event information for every order step, you need to make sure that this information is being updated in the Redis state store. You will do this in the next challenge using Dapr [Pub/Sub](/docs/challenge-3/dotnet.md)!

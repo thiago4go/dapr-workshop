@@ -2,7 +2,7 @@
 
 Thank you for completing the Diagrid Dapr Workshop!
 
-If you have more questions or comments about Dapr, please join the [Dapr Discord](https://bit.ly/dapr-discord), where hundreds of developers are sharing their experiences.
+If you have more questions or comments about Dapr, please join the [Dapr Discord](https://bit.ly/dapr-discord), where thousands of developers are sharing their experiences.
 
 ## Claim your reward
 
