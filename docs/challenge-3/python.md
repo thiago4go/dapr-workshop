@@ -1,10 +1,8 @@
 # Challenge 3 - Pub/Sub
 
-<img src="../../imgs/challenge-3.png" width=75%>
-
 ## Overview
 
-In this challenge, the goal is to update the state store with all the events from our order. For that, you will:
+In the third challenge, the goal is to update the state store with all the events from pizza order. For that, you will:
 
 - Update the order with the following event states:
 
@@ -20,15 +18,17 @@ Delivered
 ```
 
 - Create a new service called _pizza-delivery_ which is responsible for... delivering the pizza :).
-- Send all the events from our order to our new component: Pub/Sub.
-- Update _pizza-kitchen_ and _pizza-store_ to publish events to our Pub/Sub using the Dapr SDK.
-- Create a _subscription_ definition and with a route in our _pizza-store_ to save all the events to Redis.
+- Send the events containing the state of the order to the new Dapr component, a pub/sub message broker.
+- Update _pizza-kitchen_ and _pizza-store_ to publish events to the Pub/Sub using the Dapr SDK.
+- Create a _subscription_ definition route in the _pizza-store_ to save all the state events to the state store.
 
-To learn more about the Publish & subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
+<img src="../../imgs/challenge-3.png" width=75%>
+
+To learn more about the Publish & Subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
 ## Create the Pub/Sub component
 
-Open the `/resources` folder and create a file called `pubsub.yaml`, add the following content:
+Open the `/resources` folder and create a file called `pubsub.yaml`. Add the following content:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -45,11 +45,11 @@ spec:
     value: ""
 ```
 
-Similar to our `statestore.yaml` file, this new definition creates a new component called _pizzapubsub_ of type _pubsub.redis_ pointing to our local Redis instance. Our apps will initialize this component to interact with it.
+Similar to our `statestore.yaml` file, this new definition creates a Dapr component called _pizzapubsub_ of type _pubsub.redis_ pointing to the local Redis instance. Each app will initialize this component to interact with it.
 
 ## Create the subscription definition
 
-Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following to it:
+Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following content to it:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -64,11 +64,9 @@ scopes:
 - pizza-store  
 ```
 
-This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be forwarded to a route called `/events`. This endpoint needs to be created in the `pizza-store` service.
+This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/events` on the scoped `pizza-store` service. By setting `pizza-store` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/events` endpoint needs to be created in the `pizza-store` service in order to receive the events.
 
-As a Dapr good practice, a _scope_ is added to this definition file. By setting `pizza-store` as the scope, it is guaranteed that this subscription rule will apply only to this service and will be ignored by others.
-
-## Installing the dependencies
+## Install the dependencies
 
 Open a new terminal window and create another virtual enviroment:
 
@@ -77,13 +75,13 @@ python -m venv env
 source env/bin/activate
 ```
 
-Navigate to `/pizza-delivery` and run the command below to install the dependencies:
+Navigate to the `/pizza-delivery` folder and run this command to install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Creating the service
+## Create the service
 
 Open `app.py`. Add the import statements below:
 
@@ -103,9 +101,9 @@ DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 ```
 
-## Creating the app route
+## Create the app route
 
-Let's create the `/deliver` route that will tell the service to start a  delivery for the order. Below **# Application routes #** add the following:
+Create the route `/deliver` that will instruct the service to start a  delivery for the pizza order.  Below **# Application routes #** add the following code:
 
 ```python
 @app.route('/deliver', methods=['POST'])
@@ -121,7 +119,7 @@ def startDelivery():
     return jsonify({'success': True})
 ```
 
-Create a new function called `deliver`. This will take the order and update it with multiple events, adding a small delay in between calls:
+Under **# Dapr Pub/Sub #** create a new function called `deliver`. This will take the order and update it with multiple events, adding a small delay in between calls:
 
 ```python
 def deliver(order_data):
@@ -147,9 +145,9 @@ def deliver(order_data):
     publish_event(order_data)
 ```
 
-## Publishing the event
+## Publish the event
 
-Now let's publish! You'll be using the Dapr SDK to submit the event to our PubSub. Under **# Dapr pub/sub #** add:
+Now its time to publish the events using Dapr! The Dapr SDK is used to submit the event to the message broker. Under **# Dapr pub/sub #** add:
 
 ```python
 def publish_event(order_data):
@@ -165,16 +163,16 @@ def publish_event(order_data):
 
 The Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
 
-## Sending the Kitchen events
+## Send the Kitchen events
 
-Open `python/pizza-kitchen` and add the following lines below the import statements:
+Open the `python/pizza-kitchen` folder and add the following lines to the `app.py` file below the import statements:
 
 ```python
 DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 ```
 
-Under **# Dapr pub/sub #**, add the following lines to send our event to the pub/sub:
+Under **# Dapr pub/sub #**, add the following lines to send the order event to the message broker:
 
 ```python
 def publish_event(order_data):
@@ -188,7 +186,7 @@ def publish_event(order_data):
         )
 ```
 
-Now, Update the `start(order_data):` and the `ready(order_data):` functions by adding a call to our `publish_event`:
+Now, update the `start(order_data):` and the `ready(order_data):` functions by adding a call to the `publish_event` function:
 
 ```python
 def start(order_data):
@@ -214,7 +212,7 @@ def ready(order_data):
     return order_data
 ```
 
-## Calling the delivery service
+## Call the delivery service
 
 Going back to the _pizza-store_ service, update the imports to be:
 
