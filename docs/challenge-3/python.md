@@ -47,7 +47,7 @@ spec:
 
 Similar to our `statestore.yaml` file, this new definition creates a Dapr component called _pizzapubsub_ of type _pubsub.redis_ pointing to the local Redis instance. Each app will initialize this component to interact with it.
 
-## Create the subscription definition
+## Create a subscription
 
 Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following content to it:
 
@@ -147,7 +147,7 @@ def deliver(order_data):
 
 ## Publish the event
 
-Now its time to publish the events using Dapr! The Dapr SDK is used to submit the event to the message broker. Under **# Dapr pub/sub #** add:
+Now its time to publish the events using Dapr! Under **# Dapr pub/sub #** add:
 
 ```python
 def publish_event(order_data):
@@ -161,7 +161,9 @@ def publish_event(order_data):
         )
 ```
 
-The Delivery service is completed. Let's update _pizza-kitchen_ and _pizza-store_. now.
+The code above uses the Dapr SDK to publish an event to the PubSub infrastructure (Redis). That event is the `order` in json format.
+
+The _delivery-service_ is now completed. Update _pizza-kitchen_ and _pizza-store_ now in the next sections of this challenge.
 
 ## Send the Kitchen events
 
@@ -236,7 +238,7 @@ DAPR_PUBSUB_NAME = 'pizzapubsub'
 DAPR_PUBSUB_TOPIC_NAME = 'order'
 ```
 
-Now, let's add a new service invocation function under **# Dapr Service Invocation #**. This is the same process from the second challenge, but now you are sending the order to the _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
+Add a new service invocation function under **# Dapr Service Invocation #**. This is the same process from the second challenge, but now you are sending the order to the _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This starts the order delivery:
 
 ```python
 def start_delivery(order_data):
@@ -257,9 +259,9 @@ def start_delivery(order_data):
     time.sleep(1)
 ```
 
-## Publishing and subscribing to events
+## Publish events
 
-First, change the `createOrder():` function to publish an event to the pub/sub. Replace the lines below:
+First, change the `createOrder():` function to publish an event to the pub/sub message broker. Replace the lines below:
 
 ```python
 # Save order to state store
@@ -282,11 +284,11 @@ with DaprClient() as client:
     )
 ```
 
-With this, you are now replacing direct calls to `save_order` and `start_cook`  with a `publish_event` process. This will send the events to Redis (our Pub/Sub component). In the next step you will subscribe to these events and save them to the state store.
+With this, you are now replacing direct calls to `save_order` and `start_cook`  with a `publish_event` process. This will send the events to the Redis Pub/Sub component. In the next step you will subscribe to these events and save them to the state store.
 
-## Subscribing to events
+## Subscribe to events
 
-Let's create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
+Create the route `/events`. This route was previously specified in our `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
 
 Under **# Dapr Pub/Sub #** include:
 
@@ -320,11 +322,11 @@ def orders_subscriber():
     return jsonify({'success': "True"})
 ```
 
-The code above picks up the order from the topic, checks for the `order_id` and the `event`. The order with the new event is saved to the state store and, based on the type of event, it is either sent to the _pizza-kitchen_ or to the _pizza-delivery_ service.
+The code above picks up the order from the topic, checks for the `order_id` and the `event_type`. The order with the new event is saved to the state store and, based on the type of event, it is either sent to the _pizza-kitchen_ or to the _pizza-delivery_ service.
 
-#### Running the application
+#### Run the application
 
-You now need to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them.
+It's time to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them.
 
 In the terminal for _pizza-store_ run:
 
@@ -353,16 +355,11 @@ Check for the logs for all three services, you should now see the pubsub compone
 INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
-## Testing the service
+## Test the service
 
-Open a fourth terminal window and create a new order:
+### Use VS Code REST Client
 
-```bash
-curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
-    -X POST \
-    http://localhost:8001/orders
-```
+Open `PizzaStore.rest` and create a new order, similar to what was done previous challenges.
 
 Navigate to the _pizza-store_ terminal, you should see the following logs pop up with all the events being updated:
 
@@ -385,9 +382,20 @@ Navigate to the _pizza-store_ terminal, you should see the following logs pop up
 == APP == INFO:root:Saving Order 93a1072c-956d-4bbf-926f-ace066a83ec2 with event Delivered
 ```
 
-## Running the front-end application
+### Use _cURL_
 
-Now that you've completed all the challenges, let's order a pizza using the UI.
+Open a fourth terminal window and create a new order:
+
+```bash
+curl -H 'Content-Type: application/json' \
+    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -X POST \
+    http://localhost:8001/orders
+```
+
+## Run the front-end application
+
+Now that you've completed all the challenges, it's time to order a pizza using the UI.
 
 With all services still running, navigate to `/pizza-frontend`, open a new terminal, and run:
 
@@ -437,6 +445,6 @@ dapr run -f .
 
 All three services will run at the same time and log events at the same terminal window.
 
----
+## Next steps
 
-[Next: Challenge completion & reward](../completion.md)
+Congratulations, you have completed all the challenges and you can claim your [reward](../completion.md)!
