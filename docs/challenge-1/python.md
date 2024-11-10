@@ -164,11 +164,11 @@ dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-po
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
 This command sets:
-    - the app-id as `pizza-store`
-    - the app-protocol to `http`
-    - an app-port of `8001` for Dapr communication into the app
-    - an http-port of `3501` for Dapr API communication from the app
-    - the resources-path, where the state store component definition file is located. This will guarantee that the Redis component is loaded when the app initializes.
+  - the app-id as `pizza-store`
+  - the app-protocol to `http`
+  - an app-port of `8001` for Dapr communication into the app
+  - an http-port of `3501` for Dapr API communication from the app
+  - the resources-path, where the state store component definition file is located. This will guarantee that the Redis component is loaded when the app initializes.
 
 Look for the log entry below to guarantee that the state store component was loaded successfully:
 
