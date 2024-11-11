@@ -446,7 +446,7 @@ curl -H 'Content-Type: application/json' \
 
 Now that you've completed all the challenges, its time to order a pizza using the UI.
 
-With all services still running, navigate to `/pizza-frontend`, open a new terminal, and run:
+With all services still running, navigate to `/PizzaFrontend`, open a new terminal, and run:
 
 ```bash
 python3 -m http.server 8080
