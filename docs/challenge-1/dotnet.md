@@ -262,6 +262,10 @@ If you downloaded Redis Insight, you can visualize the new order there:
 
 ![redis-insight](/imgs/redis-insight.png)
 
+## Bonus challenge - Use the Dapr State Managment HTTP API
+
+You've now used the Dapr SDK to interact with the State Management API. Instead of using the SDK you can also use the Dapr HTTP API directly. The `DaprAPIs.rest` file in the root of the repository contains some examples how to interact with the [State Management HTTP API](https://docs.dapr.io/reference/api/state_api/).  
+
 ## Next steps
 
 Create a new service to cook the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!
