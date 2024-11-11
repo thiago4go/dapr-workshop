@@ -40,6 +40,7 @@ This is a Dapr Component specification file named `pizzastatestore`. In the _spe
 Now navigate to the `/pizza-store` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
+cd pizza-store
 pip install -r requirements.txt
 ```
 
