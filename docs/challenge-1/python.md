@@ -46,7 +46,7 @@ pip install -r requirements.txt
 
 ## Create the service
 
-Open `/pizza-store/app.py`. Notice the two import lines, let's add a couple more libraries there:
+Open `/pizza-store/app.py`. Update all the `from` and `import` lines:
 
 ```python
 from flask import Flask, request, jsonify
