@@ -6,6 +6,7 @@ Download and install the following locally:
 
 - [Docker](https://docs.docker.com/engine/install/)
 - [Visual Studio Code](https://code.visualstudio.com/download)
+- [Dev Containers - Optional but recommended](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
 If you use the [devcontainer](https://containers.dev/) configuration for the .NET or Python workshop challenges, you don't need anything else, since everything is already part of the devcontainer. Continue to the [Considerations](#considerations) section.
 
