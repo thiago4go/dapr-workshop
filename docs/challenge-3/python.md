@@ -393,20 +393,6 @@ curl -H 'Content-Type: application/json' \
     http://localhost:8001/orders
 ```
 
-## Run the front-end application
-
-Now that you've completed all the challenges, it's time to order a pizza using the UI.
-
-With all services still running, navigate to `/pizza-frontend`, open a new terminal, and run:
-
-```bash
-python3 -m http.server 8080
-```
-
-Open a browser window and navigate to `localhost:8080`, fill-out your order on the right-hand side and press `Place Order`. All the events will pop-up at the bottom for you.
-
-![front-end](/imgs/front-end.png)
-
 ## Dapr multi-app run
 
 Instead of opening multiple terminals to run the services, you can take advantage of a great Dapr CLI feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/). This enables you run all three services with just one command!
