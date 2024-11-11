@@ -87,7 +87,13 @@ def ready(order_data):
 
 Navigate back to the _pizza-store_ service. Construct a Dapr Service Invocation call to the `/cook` endpoint on the _pizza-kitchen_ service.
 
-First, update the `createOrder()` function by adding the following line after the `save_order((order_id, order_data))` invocation:
+First, add a new import statement to the file:
+
+```python
+import requests
+```
+
+Then, update the `createOrder()` function by adding the following line after the `save_order(order_id, order_data)` invocation:
 
 ```python
  # Start cooking
