@@ -16,7 +16,7 @@ If you're **not** using the devcontainer option you will also need to install:
 - [Database Client for VSCode](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-database-client2) or [Redis Insight](https://redis.io/insight/) (optional to visualize Redis data)
 - [Powershell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) (for Windows users)
 
-Today the workshop is offered in two languages, Python and Java. For the language of your choice you will also need to install the following:
+Today the workshop is offered in two languages, Python and .NET. For the language of your choice you will also need to install the following:
 
 <details>
 <summary>Python</summary>
