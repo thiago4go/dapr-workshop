@@ -19,8 +19,8 @@ Delivered
 
 - Create a new service called _pizza-delivery_ which is responsible for... delivering the pizza :).
 - Send the events containing the state of the order to the new Dapr component, a pub/sub message broker.
-- Update _pizza-kitchen_ and _pizza-store_ to publish events to the Pub/Sub using the Dapr SDK.
-- Create a _subscription_ definition route in the _pizza-store_ to save all the state events to the state store.
+- Update _pizza-kitchen_ and _pizza-storefront_ to publish events to the Pub/Sub using the Dapr SDK.
+- Create a _subscription_ definition route in the _pizza-storefront_ to save all the state events to the state store.
 
 <img src="../../imgs/challenge-3.png" width=75%>
 
@@ -55,16 +55,16 @@ Still inside the `/resources` folder, create a new file called `subscription.yam
 apiVersion: dapr.io/v1alpha1
 kind: Subscription
 metadata:
-  name: pizza-store-subscription
+  name: pizza-storefront-subscription
 spec:
   topic: order
   route: /events
   pubsubname: pizzapubsub
 scopes: 
-- pizza-store  
+- pizza-storefront  
 ```
 
-This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/events` on the scoped `pizza-store` service. By setting `pizza-store` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/events` endpoint needs to be created in the `pizza-store` service in order to receive the events.
+This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/events` on the scoped `pizza-storefront` service. By setting `pizza-storefront` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/events` endpoint needs to be created in the `pizza-storefront` service in order to receive the events.
 
 ## Install the dependencies
 
@@ -198,7 +198,7 @@ public async Task<IActionResult> PublishEvent(Order order)
 
 The code above uses the Dapr SDK to publish an event to the PubSub infrastructure (Redis). That event is the `order` in json format.
 
-The `delivery-service` is now completed. Update _pizza-kitchen_ and _pizza-store_ now.
+The `delivery-service` is now completed. Update _pizza-kitchen_ and _pizza-storefront_ now.
 
 ## Register the DaprClient for PizzaKitchen
 
@@ -290,7 +290,7 @@ private async Task ReadyForDelivery(Order order)
 
 ## Call the delivery service
 
-Going back to the `PizzaStoreController` class in the _pizza-store_ service add the following ready-only strings referencing the pub/sub component and the topic will be published to:
+Going back to the `PizzaStoreController` class in the _pizza-storefront_ service add the following ready-only strings referencing the pub/sub component and the topic will be published to:
 
 ```csharp
 private readonly string PubSubName = "pizzapubsub";
@@ -334,7 +334,7 @@ With this, you are now replacing direct calls to `SaveOrderToStateStore` and `Co
 
 ## Subscribe to events
 
-Create the route `/events` in the _pizza-store_ service. This route was previously specified in the `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
+Create the route `/events` in the _pizza-storefront_ service. This route was previously specified in the `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
 
 Under **// -------- Dapr Pub/Sub -------- //** add the following:
 
@@ -374,10 +374,10 @@ The code above picks up the order from the topic, deserializes it saves it to th
 
 ## Run the application
 
-It's time to run all three applications. If the _pizza-store_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In the terminal, navigate to the folder where the _pizza-store_ service located and run the command below:
+It's time to run all three applications. If the _pizza-storefront_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In the terminal, navigate to the folder where the _pizza-storefront_ service located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-storefront --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
 Open a new terminal window and navigate to the _pizza-kitchen_ folder. Run the command below:
@@ -398,7 +398,7 @@ dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http
 Check the Dapr and application logs for all three services. You should now see the pubsub component loaded in the Dapr logs:
 
 ```bash
-INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
+INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-storefront instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
 ## Test the service
@@ -407,7 +407,7 @@ INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-store i
 
 Open `PizzaStore.rest` and create a new order, similar to what was done previous challenges.
 
-Navigate to the _pizza-store_ terminal, where you should see the following logs pop up with all the events being updated:
+Navigate to the _pizza-storefront_ terminal, where you should see the following logs pop up with all the events being updated:
 
 ```bash
 == APP == Posting order: 
@@ -470,7 +470,7 @@ common:
   # configFilePath: ./resources/config/config.yaml
 apps:
   - appDirPath: ./PizzaStore/
-    appID: pizza-store
+    appID: pizza-storefront
     daprHTTPPort: 3501
     appPort: 8001
     command: ["dotnet", "run"]

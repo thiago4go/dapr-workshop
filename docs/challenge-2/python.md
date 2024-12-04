@@ -5,7 +5,7 @@
 In this challenge, you will send the order created in the previous step to be cooked in the kitchen. For that, you will:
 
 - Create a new service called _pizza-kitchen_ with a `/cook` endpoint.
-- Update `pizza-store` to invoke the `/cook` endpoint using the Dapr Service Invocation API.
+- Update `pizza-storefront` to invoke the `/cook` endpoint using the Dapr Service Invocation API.
 
 <img src="../../imgs/challenge-2.png" width=50%>
 
@@ -85,7 +85,7 @@ def ready(order_data):
 
 ## Call the app route
 
-Navigate back to the _pizza-store_ service. Construct a Dapr Service Invocation call to the `/cook` endpoint on the _pizza-kitchen_ service.
+Navigate back to the _pizza-storefront_ service. Construct a Dapr Service Invocation call to the `/cook` endpoint on the _pizza-kitchen_ service.
 
 First, add a new import statement to the file:
 
@@ -136,7 +136,7 @@ The Dapr sidecar will use the information in the `dapr-app-id` to discover the l
 target_url = '%s:%s/%s' % (base_url, dapr_http_port, method)
 ```
 
-This starts with localhost, since the _pizza-store_ Dapr sidecar is running there, the port of this Dapr sidecar (`3501`), and the method that will be called (`cook`) on the _pizza-kitchen_ app. 
+This starts with localhost, since the _pizza-storefront_ Dapr sidecar is running there, the port of this Dapr sidecar (`3501`), and the method that will be called (`cook`) on the _pizza-kitchen_ app. 
 
 3. Finally the `requests.post` method is used to combine the `target_url`, `order_data` payload and the `headers`:
 
@@ -147,7 +147,7 @@ This starts with localhost, since the _pizza-store_ Dapr sidecar is running ther
         headers=headers
 ```
 
-This method will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-store_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The responsiblity of making the service invocation call is then passed to the sidecar, as the picture below illustrates:
+This method will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-storefront_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The responsiblity of making the service invocation call is then passed to the sidecar, as the picture below illustrates:
 
 ![service-invocation](/imgs/service-invocation.png)
 
@@ -155,10 +155,10 @@ This way, services only need to communicate to their associated sidecar over loc
 
 ## Run the application
 
-It's now time to run both applications. If the _pizza-store_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-store_, ensure you're still in the _pizza-store_ folder where `app.py` is located and run the command below:
+It's now time to run both applications. If the _pizza-storefront_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-storefront_, ensure you're still in the _pizza-storefront_ folder where `app.py` is located and run the command below:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
+dapr run --app-id pizza-storefront --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
 ```
 
 In the terminal for the  _pizza-kitchen_ application ensure you are in the _pizza-kitchen_ folder and run the command below:

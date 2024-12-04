@@ -7,7 +7,7 @@
 In this challenge, you will:
 
 - Configure a State Store component using a local Redis instance to save, get, and delete a pizza order.
-- Update the `pizza-store` application to use the Dapr State Management API.
+- Update the `pizza-storefront` application to use the Dapr State Management API.
 - Run the app locally using the Dapr CLI.
 
 <img src="../../imgs/challenge-1.png" width=50%>
@@ -37,16 +37,16 @@ This is a Dapr Component specification file named `pizzastatestore`. In the _spe
 
 ## Install dependencies
 
-Now navigate to the `/pizza-store` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
+Now navigate to the `/pizza-storefront` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
-cd pizza-store
+cd pizza-storefront
 pip install -r requirements.txt
 ```
 
 ## Create the service
 
-Open `/pizza-store/app.py`. Update all the `from` and `import` lines:
+Open `/pizza-storefront/app.py`. Update all the `from` and `import` lines:
 
 ```python
 from flask import Flask, request, jsonify
@@ -155,17 +155,17 @@ To save the event a new order UUID is generated and set a new event: _Sent to Ki
 
 ## Run the application
 
-Now, open a terminal and navigate to the `/pizza-store` folder where `app.py` is located. Use the Dapr CLI to run the following command:
+Now, open a terminal and navigate to the `/pizza-storefront` folder where `app.py` is located. Use the Dapr CLI to run the following command:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
+dapr run --app-id pizza-storefront --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
 ```
 
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
 This command sets:
-  - the app-id as `pizza-store`
+  - the app-id as `pizza-storefront`
   - the app-protocol to `http`
   - an app-port of `8001` for Dapr communication into the app
   - an http-port of `3501` for Dapr API communication from the app
@@ -174,7 +174,7 @@ This command sets:
 Look for the log entry below to guarantee that the state store component was loaded successfully:
 
 ```bash
-INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
+INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-storefront instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
 ## Test the service
