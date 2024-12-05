@@ -35,10 +35,10 @@ PizzaKitchen/
 cd PizzaKitchen
 ```
 
-2. Inside `/Controllers/CookingController.cs`, analyse the endpoint `/cook` which is simply calling a service that you will implement in the next step.
+2. Inside `/Controllers/CookController.cs`, analyse the endpoint `/cook` which is simply calling a service that you will implement in the next step.
 
 ```csharp
-[HttpPost("cook")]
+[HttpPost]
 public async Task<ActionResult<Order>> Cook(Order order)
 {
     _logger.LogInformation("Starting cooking for order: {OrderId}", order.OrderId);
@@ -47,7 +47,7 @@ public async Task<ActionResult<Order>> Cook(Order order)
 }
 ```
 
-3. Navigate to `/Services/CookingService.cs` and update `CookPizzaAsync` with the code below:
+3. Navigate to `/Services/CookService.cs` and update `CookPizzaAsync` with the code below:
 
 ```csharp
 public async Task<Order> CookPizzaAsync(Order order)
@@ -165,7 +165,6 @@ Open `Program.cs` and add the `DaprClient` registration to the `ServiceCollectio
 
 ```csharp
 builder.Services.AddControllers().AddDapr();
-builder.Services.AddSingleton<IStorefrontService, StorefrontService>();
 ```
 
 This enables the dependency injection of the `DaprClient` in other classes.
@@ -377,16 +376,7 @@ Alternatively, open a third terminal window and create a new order via cURL:
 
 ```bash
 curl -H 'Content-Type: application/json' \
-    -d '{
-    "orderId": "123",
-    "pizzaType": "pepperoni",
-    "size": "large",
-    "customer": {
-        "name": "John Doe",
-        "address": "123 Main St",
-        "phone": "555-0123"
-    }
-    ' \
+    -d '{ "orderId": "1", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
     -X POST \
     http://localhost:8002/storefront/order
 ```

@@ -43,6 +43,7 @@ Navigate to the `/PizzaOrder` directory. This folder contains all the files you 
 cd PizzaOrder
 
 dotnet add package Dapr.Client
+dotnet add package Dapr.AspNetCore
 ```
 
 ## Register the DaprClient
@@ -210,17 +211,26 @@ INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-stor
 
 ### Use VS Code REST Client
 
-Open the `PizzaStore.rest` file located in the root of the repository and place a new order by clicking the button `Send request` under _Place a new order_:
+Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `### Direct Pizza Order Endpoint (for testing)`:
 
-![send-request](/imgs/rest-request.png)
+```http
+### Direct Pizza Order Endpoint (for testing)
+POST {{pizzaOrderUrl}}/order
+Content-Type: application/json
 
-Once an order is posted, the _Order ID_ is extracted from the response body and assigned to the @order-id variable:
-
-```bash
-@order-id = {{postRequest.response.body.order_id}}
+{
+    "orderId": "123",
+    "pizzaType": "pepperoni",
+    "size": "large",
+    "customer": {
+        "name": "John Doe",
+        "address": "123 Main St",
+        "phone": "555-0123"
+    }
+}
 ```
 
-This allows you to immediately run a `GET` or `DELETE` request with the correct _Order ID_. To retrieve and delete the order, run the corresponding requests.
+Run the `GET` and `DELETE` requests sitauted below to get and delete the order as well.
 
 ### Use _cURL_
 
@@ -228,9 +238,9 @@ Run the command below to create a new order:
 
 ```bash
 curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -d '{ "orderId": "1", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
     -X POST \
-    http://localhost:8001/orders
+    http://localhost:8001/order
 ```
 
 Copy the order-id generated and run the following command to get the newly created order:
@@ -238,7 +248,7 @@ Copy the order-id generated and run the following command to get the newly creat
 ```bash
 curl -H 'Content-Type: application/json' \
     -X GET \
-    http://localhost:8001/orders/<order-id>
+    http://localhost:8001/order/123
 ```
 
 Finally, delete the order:
@@ -246,7 +256,7 @@ Finally, delete the order:
 ```bash
 curl -H 'Content-Type: application/json' \
     -X DELETE \
-    http://localhost:8001/orders/<order-id>
+    http://localhost:8001/order/123
 ```
 
 ### Visualize the data
@@ -257,8 +267,8 @@ If you downloaded Redis Insight, you can visualize the new order there:
 
 ## Bonus challenge - Use the Dapr State Managment HTTP API
 
-You've now used the Dapr SDK to interact with the State Management API. Instead of using the SDK you can also use the Dapr HTTP API directly. The `DaprAPIs.rest` file in the root of the repository contains some examples how to interact with the [State Management HTTP API](https://docs.dapr.io/reference/api/state_api/).  
+You've now used the Dapr SDK to interact with the State Management API. Instead of using the SDK you can also use the Dapr HTTP API directly. The `Endpoints.http` file in the root of the repository contains some examples how to interact with the [State Management HTTP API](https://docs.dapr.io/reference/api/state_api/).  
 
 ## Next steps
 
-Create a new service to cook the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!
+Create a new service to create the order, cook, and deliver the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!

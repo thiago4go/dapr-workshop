@@ -2,25 +2,11 @@
 
 ## Overview
 
-In the third challenge, the goal is to update the state store with all the events from pizza order. For that, you will:
+On the third challenge, your goal is to update the state store with all the events from pizza order that we are generating from the storefront, kitchen, and delivery services. For that, you will:
 
-- Update the order with the following event states:
-
-```text
-Sent to kitchen
-Cooking
-Ready for delivery
-Order picked up by driver
-Delivery started
-En-route
-Nearby
-Delivered
-```
-
-- Create a new service called _pizza-delivery_ which is responsible for... delivering the pizza :).
-- Send the events containing the state of the order to the new Dapr component, a pub/sub message broker.
-- Update _pizza-kitchen_ and _pizza-storefront_ to publish events to the Pub/Sub using the Dapr SDK.
-- Create a _subscription_ definition route in the _pizza-storefront_ to save all the state events to the state store.
+- Send all the generated events to a new Dapr component, a pub/sub message broker
+- Update the storefront, kitchen, and delivery services to publish a message to the pub/sub.
+- Subscribe to these events in the order service, which is already managing the order state in our state store.
 
 <img src="../../imgs/challenge-3.png" width=75%>
 
@@ -43,6 +29,11 @@ spec:
     value: localhost:6379
   - name: redisPassword
     value: ""
+scopes:
+- pizza-storefront
+- pizza-kitchen
+- pizza-delivery
+- pizza-order
 ```
 
 Similar to the `statestore.yaml` file, this new definition creates a Dapr component called _pizzapubsub_ of type _pubsub.redis_ pointing to the local Redis instance, using Redis Streams. Each app will initialize this component to interact with it.
@@ -55,342 +46,284 @@ Still inside the `/resources` folder, create a new file called `subscription.yam
 apiVersion: dapr.io/v1alpha1
 kind: Subscription
 metadata:
-  name: pizza-storefront-subscription
+  name: pizza-subscription
 spec:
-  topic: order
-  route: /events
+  topic: orders
+  route: /orders-sub
   pubsubname: pizzapubsub
 scopes: 
-- pizza-storefront  
+- pizza-order
 ```
 
-This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/events` on the scoped `pizza-storefront` service. By setting `pizza-storefront` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/events` endpoint needs to be created in the `pizza-storefront` service in order to receive the events.
+This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/orders-sub` on the scoped `pizza-order` service. By setting `pizza-storefront` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/orders-sub` endpoint needs to be created in the `pizza-order` service in order to receive the events.
 
 ## Install the dependencies
 
-Navigate to `/PizzaDelivery`. Before you start coding, install the Dapr dependencies.
+Navigate to root of your solution. Before you start coding, install the Dapr dependencies to the `pizza-kitchen` and the `pizza-delivery` services. The `pizza-storefront` service already has the dependencies from challenge 2.
 
 ```bash
+# Navigate to the service folder and add the Dapr package
+cd PizzaKitchen
+dotnet add package Dapr.Client
+dotnet add package Dapr.AspNetCore
+
+# Navigate to the service folder and add the Dapr package
 cd PizzaDelivery
 dotnet add package Dapr.Client
+dotnet add package Dapr.AspNetCore
+
+cd ..
 ```
 
 ## Register the DaprClient
 
-Open `Program.cs` and add this using statement to the top:
+Inside the `pizza-kitchen` and the `pizza-delivery` services, open `Program.cs` and add the `DaprClient` registration to the `ServiceCollection`:
+
+```csharp
+builder.Services.AddControllers().AddDapr();
+```
+
+## Update the Kitchen service to publish messages to the message broker
+
+1. Inside the `PizzaKitchen` folder, navigate to `/Services/CookService.cs`. Import the DaprClient:
 
 ```csharp
 using Dapr.Client;
 ```
 
-In the same file add the `DaprClient` registration to the `ServiceCollection`:
-
-```csharp
-builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
-```
-
-This enables the dependency injection of the `DaprClient` in other classes.
-
-## Create the service
-
-Open `/Controllers/PizzaDeliveryController.cs` and add the following import statements.
-
-```csharp
-using Microsoft.AspNetCore.Mvc;
-using Dapr.Client;
-```
-
-Create a private field for the `DaprClient` inside the controller class:
+2. Add a private readonly DaprClient reference:
 
 ```csharp
 private readonly DaprClient _daprClient;
 ```
 
-Update the `PizzaDeliveryController` constructor to include the `DaprClient` and to set the private field:
+3. Add two contants to hold the names of the pub/sub component and topic you will be publishing the messages to:
 
 ```csharp
-public PizzaDeliveryController(DaprClient daprClient, ILogger<PizzaDeliveryController> logger)
+private const string PUBSUB_NAME = "pizzapubsub";
+private const string TOPIC_NAME = "orders";
+```
+
+4. Update the class constructor to add the DaprClient dependency:
+
+```csharp
+public CookService(DaprClient daprClient, ILogger<CookService> logger)
+{
+    _daprClient = daprClient;
+    _logger = logger;
+}
+```
+
+5. Finally, update the `CookPizzaAsync` try-catch block with the following code:
+
+```csharp
+try
+{
+    foreach (var (status, duration) in stages)
     {
-        _logger = logger;
-        _daprClient = daprClient;
-    }
-```
-
-## Create the app route
-
-Create the route `/deliver` that will instruct the service to start a  delivery for the pizza order. Below **// -------- Application routes -------- //** add the following code:
-
-```csharp
-// App route: Post order
-[HttpPost("/deliver", Name = "StartCook")]
-public async Task<ActionResult> PostOrder([FromBody] Order order)
-{
-    if (order is null)
-    {
-        return BadRequest();
+        order.Status = status;
+        _logger.LogInformation("Order {OrderId} - {Status}", order.OrderId, status);
+        
+        await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+        await Task.Delay(TimeSpan.FromSeconds(duration));
     }
 
-    Console.WriteLine("Delivery started: " + order.OrderId);
-
-    await StartDelivery(order);
-
-    Console.WriteLine("Delivery completed: " + order.OrderId);
-
-    return Ok(order);
+    order.Status = "cooked";
+    await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+    return order;
 }
-```
-
-Under **// -------- Dapr Pub/Sub -------- //** create a new function called `StartDelivery`. This will take the order and update it with multiple events, adding a small delay in between calls:
-
-```csharp
-private async Task StartDelivery(Order order)
+catch (Exception ex)
 {
-  // Simulate delivery time and events
-  await Task.Delay(3000);
-  order.Event = "Delivery started";
-  await PublishEvent(order);
-
-  await Task.Delay(3000);
-  order.Event = "Order picked up by driver";
-  await PublishEvent(order);
-
-  await Task.Delay(5000);
-  order.Event = "En-route";
-  await PublishEvent(order);
-
-  await Task.Delay(5000);
-  order.Event = "Nearby";
-  await PublishEvent(order);
-
-  await Task.Delay(5000);
-  order.Event = "Delivered";
-  await PublishEvent(order);
+    _logger.LogError(ex, "Error cooking order {OrderId}", order.OrderId);
+    order.Status = "cooking_failed";
+    order.Error = ex.Message;
+    await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+    return order;
 }
 ```
 
-## Publish the event
+The just like the previous challenges, we are using the Dapr Client to call the building block API: `await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);`.
 
-Now its time to publish the events using Dapr! Add the following lines into the controller class to define the Pub/Sub component and topic names:
+In this case, `publishEventAsync` will publish the message `order` to the `PUBSUB_NAME` and `TOPIC_NAME` you've declared above.
 
-```csharp
-private readonly string PubSubName = "pizzapubsub";
-private readonly string TopicName = "order";
-```
+Let's do the same for the Delivery and Storefront services.
 
-Use the Dapr SDK to submit the event to the message broker. Under **// -------- Dapr Pub/Sub -------- //** add:
+## Update the Delivery service to publish messages to the message broker
 
-```csharp
-public async Task<IActionResult> PublishEvent(Order order)
-{
-  if (order is null)
-  {
-      return BadRequest();
-  }
-
-  // create metadata
-  var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-
-  await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
-
-  return Ok();
-}
-```
-
-The code above uses the Dapr SDK to publish an event to the PubSub infrastructure (Redis). That event is the `order` in json format.
-
-The `delivery-service` is now completed. Update _pizza-kitchen_ and _pizza-storefront_ now.
-
-## Register the DaprClient for PizzaKitchen
-
-Navigate to the `/PizzaKitchen` folder, open `Program.cs` and add this using statement to the top:
+1. Inside the `PizzaDelivery` folder, navigate to `/Services/DeliveryService.cs`. Import the DaprClient:
 
 ```csharp
 using Dapr.Client;
 ```
 
-In the same file add the `DaprClient` registration to the `ServiceCollection`:
-
-```csharp
-builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
-```
-
-This enables the dependency injection of the DaprClient in other classes.
-
-## Send the Kitchen events
-
-Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and create a private field for the `DaprClient` inside the controller class:
+2. Add a private readonly DaprClient reference:
 
 ```csharp
 private readonly DaprClient _daprClient;
 ```
 
-Update the `PizzaKitchenController` constructor to include the `DaprClient` and to set the private field:
+3. Add two contants to hold the names of the pub/sub component and topic you will be publishing the messages to:
 
 ```csharp
-public PizzaKitchenController(DaprClient daprClient, ILogger<PizzaKitchenController> logger)
+private const string PUBSUB_NAME = "pizzapubsub";
+private const string TOPIC_NAME = "orders";
+```
+
+4. Update the class constructor to add the DaprClient dependency:
+
+```csharp
+public DeliveryService(DaprClient daprClient, ILogger<DeliveryService> logger)
+{
+    _daprClient = daprClient;
+    _logger = logger;
+}
+```
+
+5. Finally, update the `DeliverPizzaAsync` try-catch block with the following code:
+
+```csharp
+try
+{
+    foreach (var (status, duration) in stages)
     {
-        _logger = logger;
-        _daprClient = daprClient;
+        order.Status = status;
+        _logger.LogInformation("Order {OrderId} - {Status}", order.OrderId, status);
+        
+        await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+        await Task.Delay(TimeSpan.FromSeconds(duration));
     }
-```
 
-Add the following lines to the controller class:
-
-```csharp
-private readonly string PubSubName = "pizzapubsub";
-private readonly string TopicName = "order";
-```
-
-Under **// -------- Dapr Pub/Sub -------- //**, add the following lines to send the order event to the message broker:
-
-```csharp
-public async Task<IActionResult> PublishEvent(Order order)
+    order.Status = "delivered";
+    await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+    return order;
+}
+catch (Exception ex)
 {
-  if (order is null)
-  {
-      return BadRequest();
-  }
-
-  // create metadata
-  var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-  await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
-
-  return Ok();
+    _logger.LogError(ex, "Error delivering order {OrderId}", order.OrderId);
+    order.Status = "delivery_failed";
+    order.Error = ex.Message;
+    await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+    return order;
 }
 ```
 
-Now, Update the `StartCooking` and the `ReadyForDelivery` functions by adding a call to the `PublishEvent` function:
+## Update the Storefront service to publish messages to the message broker
+
+1. Inside the `PizzaStorefront` service folder, navigate to `/Services/Storefront.cs` and add the pub/sub contants:
 
 ```csharp
-private async Task StartCooking(Order order)
+private const string PUBSUB_NAME = "pizzapubsub";
+private const string TOPIC_NAME = "orders";
+```
+
+2. Inside `ProcessOrderAsync` update the try-catch block with:
+
+```csharp
+try
 {
-  var prepTime = new Random().Next(4, 7);
+    // Set pizza order status
+    foreach (var (status, duration) in stages)
+    {
+        order.Status = status;
+        _logger.LogInformation("Order {OrderId} - {Status}", order.OrderId, status);
+        
+        await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+        await Task.Delay(TimeSpan.FromSeconds(duration));
+    }
 
-  order.PrepTime = prepTime;
-  order.Event = "Cooking";
+    _logger.LogInformation("Starting cooking process for order {OrderId}", order.OrderId);
+        
+    // Use the Service Invocation building block to invoke the endpoint in the pizza-kitchen service
+    var response = await _daprClient.InvokeMethodAsync<Order, Order>(
+        HttpMethod.Post,
+        "pizza-kitchen",
+        "cook",
+        order);
 
-  // Send cooking event to pubsub 
-  await PublishEvent(order);
+    _logger.LogInformation("Order {OrderId} cooked with status {Status}", 
+        order.OrderId, response.Status);
 
-  await Task.Delay(prepTime * 1000);
+    // Use the Service Invocation building block to invoke the endpoint in the pizza-delivery service
+    _logger.LogInformation("Starting delivery process for order {OrderId}", order.OrderId);
+        
+    response = await _daprClient.InvokeMethodAsync<Order, Order>(
+        HttpMethod.Post,
+        "pizza-delivery",
+        "delivery",
+        order);
 
-  return;
+    _logger.LogInformation("Order {OrderId} delivered with status {Status}", 
+        order.OrderId, response.Status);
+
+    return order;
 }
-
-private async Task ReadyForDelivery(Order order)
+catch (Exception ex)
 {
-  order.Event = "Ready for delivery";
-
-  // Send cooking event to pubsub 
-  await PublishEvent(order);
-
-  return;
+    _logger.LogError(ex, "Error processing order {OrderId}", order.OrderId);
+    order.Status = "failed";
+    order.Error = ex.Message;
+    
+    await _daprClient.PublishEventAsync(PUBSUB_NAME, TOPIC_NAME, order);
+    return order;
 }
 ```
-
-## Call the delivery service
-
-Going back to the `PizzaStoreController` class in the _pizza-storefront_ service add the following ready-only strings referencing the pub/sub component and the topic will be published to:
-
-```csharp
-private readonly string PubSubName = "pizzapubsub";
-private readonly string TopicName = "order";
-```
-
-Add a new service invocation function under **// -------- Dapr Service Invocation -------- //**. This is the same process from the second challenge, but now you will be sending the order to the _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This begins the order delivery:
-
-```csharp
-private async Task Deliver(Order order)
-{
-    var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-delivery");
-
-    var response = await client.PostAsJsonAsync("/deliver", order, cancellationToken: CancellationToken.None);
-    Console.WriteLine("Returned: " + response.StatusCode);
-}
-```
-
-## Publish events
-
-Change the `PostOrder():` function to publish an event to the pub/sub broker. Replace the lines below:
-
-```csharp
-// Save order to state store
-await SaveOrderToStateStore(order);
-
-// Start cooking
-await Cook(order);
-```
-
-With the following code block:
-
-```csharp
-// create metadata
-var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-// publish the order
-await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
-```
-
-With this, you are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to the Redis Pub/Sub component. In the next step you will subscribe to these events and save them to the state store.
 
 ## Subscribe to events
 
-Create the route `/events` in the _pizza-storefront_ service. This route was previously specified in the `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
+Now that you've published the events to the topic `orders` in the message broker, you will subscribe to the same topic in the `pizza-order` service:
 
-Under **// -------- Dapr Pub/Sub -------- //** add the following:
+Navigate to the `PizzaOrder` service folder. Inside `/Controllers/OrderController.cs` find the  the route `/order-sub`:
 
 ```csharp
-[HttpPost("/events")]
-public async Task<IActionResult> Process([FromBody] JsonDocument rawTransaction)
+[HttpPost("/orders-sub")]
+public async Task<IActionResult> HandleOrderUpdate(CloudEvent<Order> cloudEvent)
 {
-    var order = JsonSerializer.Deserialize<Order>(rawTransaction.RootElement.GetProperty("data").GetRawText());
+    _logger.LogInformation("Received order update for order {OrderId}", 
+        cloudEvent.Data.OrderId);
 
-    if (order is null)
-    {
-        return BadRequest();
-    }
-
-    Console.WriteLine("Processing order: " + order.OrderId);
-
-    await SaveOrderToStateStore(order);
-
-    // check if event is sent to kitchen
-    if (order.Event == "Sent to kitchen")
-    {
-        // Start cooking
-        await Cook(order);
-    }
-
-    if (order.Event == "Ready for delivery")
-    {
-        //start delivery
-        await Deliver(order);
-    }
-
+    var result = await _orderStateService.UpdateOrderStateAsync(cloudEvent.Data);
     return Ok();
 }
 ```
 
-The code above picks up the order from the topic, deserializes it saves it to the state store using Dapr. Based on the type of event, we either send the event to the kitchen or to the delivery service.
+Following the `subscription.yaml` file spec, every time a new message lands in the `orders` topic within the `pizzapubsub` pub/sub, it will be routed to this `/orders-sub` topic. The message will then be sent to the previously created function that creates or updates the message in the state store, created in the first challenge.
+
+```yaml
+spec:
+  topic: orders
+  route: /orders-sub
+  pubsubname: pizzapubsub
+```
 
 ## Run the application
 
-It's time to run all three applications. If the _pizza-storefront_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In the terminal, navigate to the folder where the _pizza-storefront_ service located and run the command below:
+It's time to run all four applications. If the `pizza-storefront`, `pizza-kitchen`, `pizza-delivery`, and the `pizza-store` 
+services are still running, press **CTRL+C** in each terminal window to stop them.
+
+1. Open a new terminal window, navigae to the `/PizzaOrder` folder and run the command below:
 
 ```bash
-dapr run --app-id pizza-storefront --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-order --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources -- dotnet run
 ```
 
-Open a new terminal window and navigate to the _pizza-kitchen_ folder. Run the command below:
+2. In your terminal, ensure you are in the `/PizzaStorefront` folder and run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-storefront --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources -- dotnet run
 ```
 
-Finally, open a third terminal window and navigate to the _pizza-delivery_ service folder. Run the command below:
+3. Open a new terminal window and navigate to `/PizzaKitchen` folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources -- dotnet run
 ```
+
+4. Open a third terminal window and navigate to `/PizzaDelivery` folder. Run the command below:
+
+```bash
+dapr run --app-id pizza-delivery --app-protocol http --app-port 8004 --dapr-http-port 3504 --resources-path ../resources -- dotnet run
+```
+
 
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
@@ -405,30 +338,76 @@ INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-storefr
 
 ### Use VS Code REST Client
 
-Open `PizzaStore.rest` and create a new order, similar to what was done previous challenges.
+Open `Endpoints.http` and create a new order sending the request on `### Direct Pizza Store Endpoint (for testing)
+`, similar to what was done previous challenge.
 
-Navigate to the _pizza-storefront_ terminal, where you should see the following logs pop up with all the events being updated:
+Navigate to the `pizza-order` terminal, where you should see the following logs pop up with all the events being updated:
 
 ```bash
-== APP == Posting order: 
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Sent to kitchen
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Cooking
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Returned: OK
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Ready for delivery
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivery started
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Order picked up by driver
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event En-route
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Nearby
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivered
-== APP == Returned: OK
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: validating
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: processing
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: confirmed
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: cooking_preparing_ingredients
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: cooking_making_dough
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: cooking_adding_toppings
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: cooking_baking
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: cooking_quality_check
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: cooked
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivery_finding_driver
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivery_driver_assigned
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivery_picked_up
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivery_on_the_way
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivery_arriving
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivery_at_location
+== APP == info: PizzaOrder.Controllers.OrderController[0]
+== APP ==       Received order update for order 123
+== APP == info: PizzaOrder.Services.OrderStateService[0]
+== APP ==       Updated state for order 123 - Status: delivered
 ```
 
 ### Use _cURL_
@@ -437,24 +416,10 @@ Open a fourth terminal window and create a new order using cURL:
 
 ```bash
 curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+   -d '{ "orderId": "1", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
     -X POST \
-    http://localhost:8001/orders
+     http://localhost:8002/storefront/order
 ```
-
-## Run the front-end application
-
-Now that you've completed all the challenges, its time to order a pizza using the UI.
-
-With all services still running, navigate to `/PizzaFrontend`, open a new terminal, and run:
-
-```bash
-python3 -m http.server 8080
-```
-
-Open a browser window and navigate to `localhost:8080`, fill-out your order on the right-hand side and click `Place Order`. All the events will pop-up at the bottom for you.
-
-![front-end](/imgs/front-end.png)
 
 ## Dapr multi-app run
 
@@ -469,20 +434,25 @@ common:
   # Uncomment the following line if you are running Consul for service naming resolution
   # configFilePath: ./resources/config/config.yaml
 apps:
-  - appDirPath: ./PizzaStore/
-    appID: pizza-storefront
+  - appDirPath: ./PizzaOrder/
+    appID: pizza-order
     daprHTTPPort: 3501
     appPort: 8001
     command: ["dotnet", "run"]
+  - appDirPath: ./PizzaStore/
+    appID: pizza-storefront
+    daprHTTPPort: 3502
+    appPort: 8002
+    command: ["dotnet", "run"]
   - appDirPath: ./PizzaKitchen/
     appID: pizza-kitchen
-    appPort: 8002
-    daprHTTPPort: 3502
+    appPort: 8003
+    daprHTTPPort: 3503
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaDelivery/
     appID: pizza-delivery
-    appPort: 8003
-    daprHTTPPort: 3503
+    appPort: 8004
+    daprHTTPPort: 3504
     command: ["dotnet", "run"]
 ```
 
@@ -492,8 +462,8 @@ Stop the services, if they are running, and enter the following command in the t
 dapr run -f .
 ```
 
-All three services will run at the same time and log events at the same terminal window.
+All four services will run at the same time and log events at the same terminal window.
 
 ## Next steps
 
-Congratulations, you have completed all the challenges and you can claim your [reward](../completion.md)!
+In the next challenge we will orchestrate the pizza ordering, cooking, and delivering process leberaging Dapr's Workflow API. Once you are ready, navigate to Challenge 4: [Workflows](/docs/challenge-4/dotnet.md)!

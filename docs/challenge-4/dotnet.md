@@ -1,4 +1,4 @@
-# Challenge 4 - Workflow
+# Challenge 4 - Workflows
 
 ## Overview
 
