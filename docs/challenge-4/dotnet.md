@@ -117,19 +117,19 @@ using Dapr.Workflow;
 using PizzaWorkflow.Models;
 ```
 
-2. The `CookingActivity` is of type `WorkflowActivity` and receives an order as an attribute and returns a modified order as a response:
+2. The `CookingActivity` is of type `WorkflowActivity` which has generic input and output type arguments. In this case, both the input and the output are of the same type, `Order`:
 
 ```csharp
 public class CookingActivity : WorkflowActivity<Order, Order>
 ```
 
-3. The method `RunAsync` runs as soon as we call the activity, as you will see in the next section.
+3. The `RunAsync` method runs as soon as we call the activity, as you will see in the next section.
 
 ```csharp
 public override async Task<Order> RunAsync(WorkflowActivityContext context, Order order)
 ```
 
-4. You are now using the Service Invocation building block to invoke the method `/cook` from our `pizza-kitchen` service. LIke we did back in Challenge 2.
+4. You are now using the Service Invocation API to invoke the `/cook` method from our `pizza-kitchen` service:
 
 ```csharp
 var response = await _daprClient.InvokeMethodAsync<Order, Order>(
@@ -139,7 +139,7 @@ var response = await _daprClient.InvokeMethodAsync<Order, Order>(
     order);
 ```
 
-5. And that is it for this Activity. Now let's do the same for the `StorefrontActivity` and the `DeliveryActivity`.
+Now let's do the same to call the `pizza-delivery` and `pizza-storefront` applications via Activities.
 
 ### Create the Delivery Activity
 
