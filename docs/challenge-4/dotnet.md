@@ -19,7 +19,6 @@ To learn more about the Workflow building block, refer to the [Dapr docs](https:
 Navigate to the `PizzaWorkflow` folder and run the command below in a terminal:
 
 ```bash
-dotnet add package Dapr.Client
 dotnet add package Dapr.Workflow
 ```
 
@@ -47,7 +46,7 @@ scopes:
 - pizza-order
 ```
 
-By setting `true` to the attribute `actorStateStore` you are allowing this state store component to manage Workflow data, since Workflows rely on [Dapr Actors](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-features-concepts/#workflow-backend) in the background. You are also scoping the component to allow the `pizza-workflow` service to access it.
+By setting the attribute `actorStateStore` value to `true` this state store component is able to manage Workflow data, since Workflows rely on [Dapr Actors](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-features-concepts/#workflow-backend) in the background. You are also scoping the component to allow the `pizza-workflow` service to access it.
 
 ## Creating the Activities
 
@@ -55,10 +54,10 @@ Workflow activities are the basic unit of work in a workflow and are the tasks t
 
 - Making a request to start the pizza order to the Storefront service.
 - Invoking the Kitchen service to cook the pizza.
-- Validate the pizza quality after it is cooked.
+- Validating the pizza quality after it is cooked.
 - Invoking the Delivery service to deliver the pizza.
 
-Each task will be a separate activity. These activities will be executed serially, but they could be executed in parallel or some combination of both.
+Each task will be a separate activity. These activities will be executed in sequence since the order is imporant. Other [workflow patterns](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-patterns/) can be used with Dapr Workflow, where activities are executed in parallel, or activities are called in a loop, but these are not relevant for this challenge.
 
 ### Create the Cooking Activity
 
