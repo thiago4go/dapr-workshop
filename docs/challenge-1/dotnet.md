@@ -230,7 +230,7 @@ Content-Type: application/json
 }
 ```
 
-Run the `GET` and `DELETE` requests sitauted below to get and delete the order as well.
+Run the `GET` and `DELETE` requests situated below to get and delete the order as well.
 
 ### Use _cURL_
 
@@ -238,12 +238,12 @@ Run the command below to create a new order:
 
 ```bash
 curl -H 'Content-Type: application/json' \
-    -d '{ "orderId": "1", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
+    -d '{ "orderId": "123", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
     -X POST \
     http://localhost:8001/order
 ```
 
-Copy the order-id generated and run the following command to get the newly created order:
+Get:
 
 ```bash
 curl -H 'Content-Type: application/json' \
@@ -264,10 +264,6 @@ curl -H 'Content-Type: application/json' \
 If you downloaded Redis Insight, you can visualize the new order there:
 
 ![redis-insight](/imgs/redis-insight.png)
-
-## Bonus challenge - Use the Dapr State Managment HTTP API
-
-You've now used the Dapr SDK to interact with the State Management API. Instead of using the SDK you can also use the Dapr HTTP API directly. The `Endpoints.http` file in the root of the repository contains some examples how to interact with the [State Management HTTP API](https://docs.dapr.io/reference/api/state_api/).  
 
 ## Next steps
 
