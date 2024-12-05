@@ -2,465 +2,643 @@
 
 ## Overview
 
-In the third challenge, the goal is to update the state store with all the events from pizza order. For that, you will:
+On the fouth and final challenge, you will orchestrate the process of ordering, cooking, and delivering a pizza using Dapr Workflows. Dapr workflow makes it easy for developers to write business logic and integrations in a reliable way. Since Dapr workflows are stateful, they support long-running and fault-tolerant applications, ideal for orchestrating microservices.
 
-- Update the order with the following event states:
+You will:
 
-```text
-Sent to kitchen
-Cooking
-Ready for delivery
-Order picked up by driver
-Delivery started
-En-route
-Nearby
-Delivered
-```
-
-- Create a new service called _pizza-delivery_ which is responsible for... delivering the pizza :).
-- Send the events containing the state of the order to the new Dapr component, a pub/sub message broker.
-- Update _pizza-kitchen_ and _pizza-storefront_ to publish events to the Pub/Sub using the Dapr SDK.
-- Create a _subscription_ definition route in the _pizza-storefront_ to save all the state events to the state store.
+- Replace the current chained service invocation calls that you created in the `pizza-storefront` service with a Workflow process.
+- Add an external event to validate the quality of the pizza after the cooking proces is done.
+- Query for the workflow status, pause, resume, and cancel the run.
 
 <img src="../../imgs/challenge-3.png" width=75%>
 
-To learn more about the Publish & Subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
+To learn more about the Workflow building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/workflow/).
 
-## Create the Pub/Sub component
+## Import the required libraries
 
-Open the `/resources` folder and create a file called `pubsub.yaml`. Add the following content:
+Navigate to the `PizzaWorkflow` folder and run the command below in a terminal:
+
+```bash
+dotnet add package Dapr.Client
+dotnet add package Dapr.Workflow
+```
+
+## Modify the state store component to accept workflows
+
+The Workflow building block requires a state store to manage its state during the run. You need to modify our `/resources/statestore.yaml` component to reflect that:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: pizzapubsub
+  name: pizzastatestore
 spec:
-  type: pubsub.redis
+  type: state.redis
   version: v1
   metadata:
   - name: redisHost
     value: localhost:6379
   - name: redisPassword
     value: ""
+  - name: actorStateStore
+    value: "true"
+scopes:
+- pizza-workflow
+- pizza-order
 ```
 
-Similar to the `statestore.yaml` file, this new definition creates a Dapr component called _pizzapubsub_ of type _pubsub.redis_ pointing to the local Redis instance, using Redis Streams. Each app will initialize this component to interact with it.
+By setting `true` to the attribute `actorStateStore` you are allowing this state store component to manage Workflow data, since Workflows rely on [Dapr Actors](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-features-concepts/#workflow-backend) in the background. You are also scoping the component to allow the `pizza-workflow` service to access it.
 
-## Create a subscription
+## Creating the Activities
 
-Still inside the `/resources` folder, create a new file called `subscription.yaml`. Add the following content to it:
+Workflow activities are the basic unit of work in a workflow and are the tasks that get orchestrated in the business process. In this challenge, you will create a workflow to process a pizza order. The tasks will involve:
 
-```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Subscription
-metadata:
-  name: pizza-storefront-subscription
-spec:
-  topic: order
-  route: /events
-  pubsubname: pizzapubsub
-scopes: 
-- pizza-storefront  
-```
+- Making a request to start the pizza order to the Storefront service.
+- Invoking the Kitchen service to cook the pizza.
+- Validate the pizza quality after it is cooked.
+- Invoking the Delivery service to deliver the pizza.
 
-This file of kind `Subscription` specifies that every time the Pub/Sub `pizzapubsub` component receives a message in the `orders` topic, this message will be sent to a route called `/events` on the scoped `pizza-storefront` service. By setting `pizza-storefront` as the only scope, we guarantee that this subscription rule will only apply to this service and will be ignored by others. Finally, the `/events` endpoint needs to be created in the `pizza-storefront` service in order to receive the events.
+Each task will be a separate activity. These activities will be executed serially, but they could be executed in parallel or some combination of both.
 
-## Install the dependencies
+### Create the Cooking Activity
 
-Navigate to `/PizzaDelivery`. Before you start coding, install the Dapr dependencies.
-
-```bash
-cd PizzaDelivery
-dotnet add package Dapr.Client
-```
-
-## Register the DaprClient
-
-Open `Program.cs` and add this using statement to the top:
+Inside the `/Activities` folder, create a new file called `CookingActivity.cs`. Copy and paste the following content:
 
 ```csharp
 using Dapr.Client;
-```
+using Dapr.Workflow;
+using PizzaWorkflow.Models;
 
-In the same file add the `DaprClient` registration to the `ServiceCollection`:
+namespace PizzaWorkflow.Activities;
 
-```csharp
-builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
-```
+public class CookingActivity : WorkflowActivity<Order, Order>
+{
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<CookingActivity> _logger;
 
-This enables the dependency injection of the `DaprClient` in other classes.
-
-## Create the service
-
-Open `/Controllers/PizzaDeliveryController.cs` and add the following import statements.
-
-```csharp
-using Microsoft.AspNetCore.Mvc;
-using Dapr.Client;
-```
-
-Create a private field for the `DaprClient` inside the controller class:
-
-```csharp
-private readonly DaprClient _daprClient;
-```
-
-Update the `PizzaDeliveryController` constructor to include the `DaprClient` and to set the private field:
-
-```csharp
-public PizzaDeliveryController(DaprClient daprClient, ILogger<PizzaDeliveryController> logger)
+    public CookingActivity(DaprClient daprClient, ILogger<CookingActivity> logger)
     {
-        _logger = logger;
         _daprClient = daprClient;
+        _logger = logger;
     }
-```
 
-## Create the app route
-
-Create the route `/deliver` that will instruct the service to start a  delivery for the pizza order. Below **// -------- Application routes -------- //** add the following code:
-
-```csharp
-// App route: Post order
-[HttpPost("/deliver", Name = "StartCook")]
-public async Task<ActionResult> PostOrder([FromBody] Order order)
-{
-    if (order is null)
+    public override async Task<Order> RunAsync(WorkflowActivityContext context, Order order)
     {
-        return BadRequest();
+        try
+        {
+            _logger.LogInformation("Starting cooking process for order {OrderId}", order.OrderId);
+            
+            var response = await _daprClient.InvokeMethodAsync<Order, Order>(
+                HttpMethod.Post,
+                "pizza-kitchen",
+                "cook",
+                order);
+
+            _logger.LogInformation("Order {OrderId} cooked with status {Status}", 
+                order.OrderId, response.Status);
+            
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cooking order {OrderId}", order.OrderId);
+            throw;
+        }
     }
-
-    Console.WriteLine("Delivery started: " + order.OrderId);
-
-    await StartDelivery(order);
-
-    Console.WriteLine("Delivery completed: " + order.OrderId);
-
-    return Ok(order);
 }
 ```
 
-Under **// -------- Dapr Pub/Sub -------- //** create a new function called `StartDelivery`. This will take the order and update it with multiple events, adding a small delay in between calls:
+#### Let's break this down
 
-```csharp
-private async Task StartDelivery(Order order)
-{
-  // Simulate delivery time and events
-  await Task.Delay(3000);
-  order.Event = "Delivery started";
-  await PublishEvent(order);
-
-  await Task.Delay(3000);
-  order.Event = "Order picked up by driver";
-  await PublishEvent(order);
-
-  await Task.Delay(5000);
-  order.Event = "En-route";
-  await PublishEvent(order);
-
-  await Task.Delay(5000);
-  order.Event = "Nearby";
-  await PublishEvent(order);
-
-  await Task.Delay(5000);
-  order.Event = "Delivered";
-  await PublishEvent(order);
-}
-```
-
-## Publish the event
-
-Now its time to publish the events using Dapr! Add the following lines into the controller class to define the Pub/Sub component and topic names:
-
-```csharp
-private readonly string PubSubName = "pizzapubsub";
-private readonly string TopicName = "order";
-```
-
-Use the Dapr SDK to submit the event to the message broker. Under **// -------- Dapr Pub/Sub -------- //** add:
-
-```csharp
-public async Task<IActionResult> PublishEvent(Order order)
-{
-  if (order is null)
-  {
-      return BadRequest();
-  }
-
-  // create metadata
-  var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-
-  await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
-
-  return Ok();
-}
-```
-
-The code above uses the Dapr SDK to publish an event to the PubSub infrastructure (Redis). That event is the `order` in json format.
-
-The `delivery-service` is now completed. Update _pizza-kitchen_ and _pizza-storefront_ now.
-
-## Register the DaprClient for PizzaKitchen
-
-Navigate to the `/PizzaKitchen` folder, open `Program.cs` and add this using statement to the top:
+1. The section below imports the Dapr Client, Workflow, and the Order model you will leverage in this activity.
 
 ```csharp
 using Dapr.Client;
+using Dapr.Workflow;
+using PizzaWorkflow.Models;
 ```
 
-In the same file add the `DaprClient` registration to the `ServiceCollection`:
+2. The `CookingActivity` is of type `WorkflowActivity` and receives an order as an attribute and returns a modified order as a response:
 
 ```csharp
-builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
+public class CookingActivity : WorkflowActivity<Order, Order>
 ```
 
-This enables the dependency injection of the DaprClient in other classes.
-
-## Send the Kitchen events
-
-Open `/PizzaKitchen/Controllers/PizzaKitchenController.cs` and create a private field for the `DaprClient` inside the controller class:
+3. The method `RunAsync` runs as soon as we call the activity, as you will see in the next section.
 
 ```csharp
-private readonly DaprClient _daprClient;
+public override async Task<Order> RunAsync(WorkflowActivityContext context, Order order)
 ```
 
-Update the `PizzaKitchenController` constructor to include the `DaprClient` and to set the private field:
+4. You are now using the Service Invocation building block to invoke the method `/cook` from our `pizza-kitchen` service. LIke we did back in Challenge 2.
 
 ```csharp
-public PizzaKitchenController(DaprClient daprClient, ILogger<PizzaKitchenController> logger)
+var response = await _daprClient.InvokeMethodAsync<Order, Order>(
+    HttpMethod.Post,
+    "pizza-kitchen",
+    "cook",
+    order);
+```
+
+5. And that is it for this Activity. Now let's do the same for the `StorefrontActivity` and the `DeliveryActivity`.
+
+### Create the Delivery Activity
+
+Inside the `/Activities` folder, create a new file called `DeliveryActivity.cs`. Copy and paste the following content:
+
+```csharp
+using Dapr.Client;
+using Dapr.Workflow;
+using PizzaWorkflow.Models;
+
+namespace PizzaWorkflow.Activities;
+
+public class DeliveryActivity : WorkflowActivity<Order, Order>
+{
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<DeliveryActivity> _logger;
+
+    public DeliveryActivity(DaprClient daprClient, ILogger<DeliveryActivity> logger)
     {
-        _logger = logger;
         _daprClient = daprClient;
+        _logger = logger;
     }
+
+    public override async Task<Order> RunAsync(WorkflowActivityContext context, Order order)
+    {
+        try
+        {
+            _logger.LogInformation("Starting delivery process for order {OrderId}", order.OrderId);
+            
+            var response = await _daprClient.InvokeMethodAsync<Order, Order>(
+                HttpMethod.Post,
+                "pizza-delivery",
+                "delivery",
+                order);
+
+            _logger.LogInformation("Order {OrderId} delivered with status {Status}", 
+                order.OrderId, response.Status);
+            
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error delivering order {OrderId}", order.OrderId);
+            throw;
+        }
+    }
+}
 ```
 
-Add the following lines to the controller class:
+### Create the Storefront Activity
+
+Inside the `/Activities` folder, create a new file called `StorefrontActivity.cs`. Copy and paste the following content:
 
 ```csharp
-private readonly string PubSubName = "pizzapubsub";
-private readonly string TopicName = "order";
-```
+using Dapr.Client;
+using Dapr.Workflow;
+using PizzaWorkflow.Models;
 
-Under **// -------- Dapr Pub/Sub -------- //**, add the following lines to send the order event to the message broker:
+namespace PizzaWorkflow.Activities;
 
-```csharp
-public async Task<IActionResult> PublishEvent(Order order)
+public class StorefrontActivity : WorkflowActivity<Order, Order>
 {
-  if (order is null)
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<StorefrontActivity> _logger;
+
+    public StorefrontActivity(DaprClient daprClient, ILogger<StorefrontActivity> logger)
+    {
+        _daprClient = daprClient;
+        _logger = logger;
+    }
+
+    public override async Task<Order> RunAsync(WorkflowActivityContext context, Order order)
+    {
+        try
+        {
+            _logger.LogInformation("Starting ordering process for order {OrderId}", order.OrderId);
+            
+            var response = await _daprClient.InvokeMethodAsync<Order, Order>(
+                HttpMethod.Post,
+                "pizza-storefront",
+                "/storefront/order",
+                order);
+
+            _logger.LogInformation("Order {OrderId} processed with status {Status}", 
+                order.OrderId, response.Status);
+            
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing order {OrderId}", order.OrderId);
+            throw;
+        }
+    }
+}
+```
+
+### Create the Validation Activity
+
+The Validation Activity is a little different from the activities above. It will act as an external event that will allow or deny moving forward with the Workflow itself.
+
+Inside the `/Activities` folder, create a new file called `ValidationActivity.cs`. Copy and paste the following content:
+
+```csharp
+using Dapr.Client;
+using Dapr.Workflow;
+using PizzaWorkflow.Models;
+
+namespace PizzaWorkflow.Activities;
+
+public class ValidationActivity : WorkflowActivity<Order, Order>
+{
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<ValidationActivity> _logger;
+
+    public ValidationActivity(DaprClient daprClient, ILogger<ValidationActivity> logger)
+    {
+        _daprClient = daprClient;
+        _logger = logger;
+    }
+
+    public override async Task<Order> RunAsync(WorkflowActivityContext context, Order order)
+    {
+        try
+        {
+            _logger.LogInformation("Starting validation process for order {OrderId}", order.OrderId);
+            
+            await _daprClient.SaveStateAsync(
+                "pizzastatestore",
+                $"validation_{order.OrderId}",
+                new { order.OrderId, Status = "pending_validation" });
+
+            _logger.LogInformation("Validation state saved for order {OrderId}", order.OrderId);
+            
+            return order;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in validation process for order {OrderId}", order.OrderId);
+            throw;
+        }
+    }
+}
+```
+
+As you can see, the code below saves a `pending_validation` status to our state store. This will define if the order should move to the delivery process or not as our workflow will wait for an external event to determine its destiny.
+
+```csharp
+await _daprClient.SaveStateAsync(
+  "pizzastatestore",
+  $"validation_{order.OrderId}",
+  new { order.OrderId, Status = "pending_validation" });
+```
+
+## Creating the Workflow
+
+Now let's move to the Workflow itself. The Dapr Workflow engine will take care of scheduling and execution of the order tasks, including managing failures and retries.
+
+Inside the `/Workflows` folder, create a file called `PizzaOrderingWorkflow.cs`. Populate with the code below:
+
+```csharp
+using Dapr.Workflow;
+using PizzaWorkflow.Models;
+using PizzaWorkflow.Activities;
+using Microsoft.Extensions.Logging;
+
+namespace PizzaWorkflow.Workflows;
+
+public class PizzaOrderingWorkflow : Workflow<Order, Order>
+{
+  public override async Task<Order> RunAsync(WorkflowContext context, Order order)
   {
-      return BadRequest();
+    try
+    {
+      // Step 1: Place and process the order
+      var orderResult = await context.CallActivityAsync<Order>(
+        nameof(StorefrontActivity),
+        order);
+
+      if (orderResult.Status != "confirmed")
+      {
+        throw new Exception($"Order failed: {orderResult.Error ?? "Unknown error"}");
+      }
+
+      // Step 2: Cook the pizza
+      var cookingResult = await context.CallActivityAsync<Order>(
+        nameof(CookingActivity),
+        orderResult);
+
+      if (cookingResult.Status != "cooked")
+      {
+        throw new Exception($"Cooking failed: {cookingResult.Error ?? "Unknown error"}");
+      }
+
+      // Update status to waiting for validation
+      cookingResult.Status = "waiting_for_validation";
+      await context.CallActivityAsync<Order>(
+        nameof(ValidationActivity),
+        cookingResult);
+
+      // Step 3: Wait for manager validation
+      var validationEvent = await context.WaitForExternalEventAsync<ValidationRequest>("ValidationComplete");
+
+      if (!validationEvent.Approved)
+      {
+        throw new Exception("Pizza validation failed - need to remake");
+      }
+
+      // Step 4: Deliver the pizza
+      var deliveryResult = await context.CallActivityAsync<Order>(
+        nameof(DeliveryActivity),
+        cookingResult);
+
+      if (deliveryResult.Status != "delivered")
+      {
+        throw new Exception($"Delivery failed: {deliveryResult.Error ?? "Unknown error"}");
+      }
+
+      deliveryResult.Status = "completed";
+      return deliveryResult;
+    }
+    catch (Exception ex)
+    {
+      order.Status = "failed";
+      order.Error = ex.Message;
+      return order;
+    }
   }
-
-  // create metadata
-  var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-  await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
-
-  return Ok();
 }
 ```
 
-Now, Update the `StartCooking` and the `ReadyForDelivery` functions by adding a call to the `PublishEvent` function:
+#### Let's break this down
+
+1. `PizzaOrderingWorkflow` is of type `Workflow`. It receives an order as an attribute and returns a modified order as a response.
 
 ```csharp
-private async Task StartCooking(Order order)
+public class PizzaOrderingWorkflow : Workflow<Order, Order>
+```
+
+2. Every Activity is called using `context.CallActivityAsync` passing the Activity name and the order as an attribute. Also, every Activity call has a vaidation at the end, that determines if the step was successfully completed or not:
+
+```csharp
+var orderResult = await context.CallActivityAsync<Order>(
+  nameof(StorefrontActivity),
+  order);
+
+if (orderResult.Status != "confirmed")
 {
-  var prepTime = new Random().Next(4, 7);
-
-  order.PrepTime = prepTime;
-  order.Event = "Cooking";
-
-  // Send cooking event to pubsub 
-  await PublishEvent(order);
-
-  await Task.Delay(prepTime * 1000);
-
-  return;
+  throw new Exception($"Order failed: {orderResult.Error ?? "Unknown error"}");
 }
+```
 
-private async Task ReadyForDelivery(Order order)
+The process above applies for the `StorefrontActivity`, `CookingActivity`, and `DeliveryActivity`.
+
+3. Now we call the `ValidationActivity` setting the current status of the result to `waiting_for_validation`.
+
+```csharp
+cookingResult.Status = "waiting_for_validation";
+await context.CallActivityAsync<Order>(
+    nameof(ValidationActivity),
+    cookingResult);
+```
+
+4. `context.WaitForExternalEventAsync` waits for an external event - in this case an endpoint that you will implement in the next step. This means that the Workflow will be on hold until this event is received with the name `ValidationComplete`. This event also contains a `ValidationRequest` object which determines if the pizza cooking process was approved or denied.
+
+```csharp
+var validationEvent = await context.WaitForExternalEventAsync<ValidationRequest>("ValidationComplete");
+
+if (!validationEvent.Approved)
 {
-  order.Event = "Ready for delivery";
-
-  // Send cooking event to pubsub 
-  await PublishEvent(order);
-
-  return;
+    throw new Exception("Pizza validation failed - need to remake");
 }
 ```
 
-## Call the delivery service
-
-Going back to the `PizzaStoreController` class in the _pizza-storefront_ service add the following ready-only strings referencing the pub/sub component and the topic will be published to:
+5. Finally, if anything fails, a `failed` status and an error message are attached to the order and it is returned.
 
 ```csharp
-private readonly string PubSubName = "pizzapubsub";
-private readonly string TopicName = "order";
-```
-
-Add a new service invocation function under **// -------- Dapr Service Invocation -------- //**. This is the same process from the second challenge, but now you will be sending the order to the _pizza-delivery_ service by posting the order to the `/deliver` endpoint. This begins the order delivery:
-
-```csharp
-private async Task Deliver(Order order)
+catch (Exception ex)
 {
-    var client = DaprClient.CreateInvokeHttpClient(appId: "pizza-delivery");
-
-    var response = await client.PostAsJsonAsync("/deliver", order, cancellationToken: CancellationToken.None);
-    Console.WriteLine("Returned: " + response.StatusCode);
+    order.Status = "failed";
+    order.Error = ex.Message;
+    return order;
 }
 ```
 
-## Publish events
+## Creating the controller
 
-Change the `PostOrder():` function to publish an event to the pub/sub broker. Replace the lines below:
+In this section, you will create endpoints to manage the workflow status. Open the file `WorkflowControlle.cs` inside the `/Controllers` folder.
+
+1. Inside the `StartOrder` endpoint, replace the `TODO:` comment with the code below:
 
 ```csharp
-// Save order to state store
-await SaveOrderToStateStore(order);
-
-// Start cooking
-await Cook(order);
+await _daprClient.StartWorkflowAsync(
+  workflowComponent: "dapr",
+  workflowName: nameof(PizzaOrderingWorkflow),
+  input: order,
+  instanceId: instanceId);
 ```
 
-With the following code block:
+We are using the Dapr Client to call `StartWorkflowAsync` passing:
+
+- A workflow component: `dapr`
+- The name of the workflow we are invoking: `PizzaOrderingWorkflow`
+- An input: the `order` object
+- An instance id: the workflow Id that we will use to manage its lifecycle.
+
+2. Inside the `ValidatePizza` endpoint, replace the `TODO:` comment with the code below:
 
 ```csharp
-// create metadata
-var metadata = new Dictionary<string, string> { { "Content-Type", "application/json" } };
-// publish the order
-await _daprClient.PublishEventAsync(PubSubName, TopicName, order, metadata, cancellationToken: CancellationToken.None);
+await _daprClient.RaiseWorkflowEventAsync(
+  instanceId: instanceId,
+  workflowComponent: "dapr",
+  eventName: "ValidationComplete",
+  eventData: validation);
 ```
 
-With this, you are now replacing direct calls to `SaveOrderToStateStore` and `Cook`  with a `PublishEventAsync` process. This will send the events to the Redis Pub/Sub component. In the next step you will subscribe to these events and save them to the state store.
+We are using the Dapr Client to call `RaiseWorkflowEventAsync` passing:
 
-## Subscribe to events
+- An instance id: the id that that was created when we started the workflow.
+- A workflow component: `dapr`
+- An event name `ValidationComplete` that will allow us to unblock the workflow.
+- The event data: a `ValidationRequest` object containing the boolean attribute `Approved` that wil determine if the workflow should continue or stop.
 
-Create the route `/events` in the _pizza-storefront_ service. This route was previously specified in the `subscription.yaml` file as the endpoint that will be triggered once a new event is published to the `orders` topic.
-
-Under **// -------- Dapr Pub/Sub -------- //** add the following:
+3. Inside the `GetOrderStatus` endpoint, replace the `TODO:` comment with the code below:
 
 ```csharp
-[HttpPost("/events")]
-public async Task<IActionResult> Process([FromBody] JsonDocument rawTransaction)
+var status = await _daprClient.GetWorkflowAsync(
+  instanceId: instanceId,
+  workflowComponent: "dapr");
+```
+
+`GetWorkflowAsync` returns the current status of the workflow.
+
+4. Inside the `PauseOrder` endpoint, replace the `TODO:` comment with the code below:
+
+```csharp
+await _daprClient.PauseWorkflowAsync(
+  instanceId: instanceId,
+  workflowComponent: "dapr");
+```
+
+`PauseWorkflowAsync` pauses the workflow after the current Activity completes its actions.
+
+5. Inside the `ResumeOrder` endpoint, replace the `TODO:` comment with the code below:
+
+```csharp
+await _daprClient.ResumeWorkflowAsync(
+  instanceId: instanceId,
+  workflowComponent: "dapr");
+```
+
+`ResumeWorkflowAsync` resumes the paused workflow.
+
+6. Inside the `CancelOrder` endpoint, replace the `TODO:` comment with the code below:
+
+```csharp
+await _daprClient.TerminateWorkflowAsync(
+  instanceId: instanceId,
+  workflowComponent: "dapr");
+```
+
+`TerminateWorkflowAsync` terminates the workflow after the current Activity completes its actions.
+
+## Register the Workflow and Activities
+
+Finanly, you will register the workflow and its activities when the service starts. Open `Program.cs` and replace the `TODO:` comment with the code below:
+
+```csharp
+builder.Services.AddDaprWorkflow(options =>
 {
-    var order = JsonSerializer.Deserialize<Order>(rawTransaction.RootElement.GetProperty("data").GetRawText());
+  // Register workflows
+  options.RegisterWorkflow<PizzaOrderingWorkflow>();
 
-    if (order is null)
-    {
-        return BadRequest();
-    }
-
-    Console.WriteLine("Processing order: " + order.OrderId);
-
-    await SaveOrderToStateStore(order);
-
-    // check if event is sent to kitchen
-    if (order.Event == "Sent to kitchen")
-    {
-        // Start cooking
-        await Cook(order);
-    }
-
-    if (order.Event == "Ready for delivery")
-    {
-        //start delivery
-        await Deliver(order);
-    }
-
-    return Ok();
-}
+  // Register activities
+  options.RegisterActivity<StorefrontActivity>();
+  options.RegisterActivity<CookingActivity>();
+  options.RegisterActivity<ValidationActivity>();
+  options.RegisterActivity<DeliveryActivity>();
+});
 ```
 
-The code above picks up the order from the topic, deserializes it saves it to the state store using Dapr. Based on the type of event, we either send the event to the kitchen or to the delivery service.
+## Remove the service invocation calls from the Storefront service
+
+Inside the `PizzaStorefront` folder, navigate to `/Services/Storefront.cs`. Remove the following lines from `ProcessOrderAsync`:
+
+```csharp
+_logger.LogInformation("Starting cooking process for order {OrderId}", order.OrderId);
+    
+// Use the Service Invocation building block to invoke the endpoint in the pizza-kitchen service
+var response = await _daprClient.InvokeMethodAsync<Order, Order>(
+    HttpMethod.Post,
+    "pizza-kitchen",
+    "cook",
+    order);
+
+_logger.LogInformation("Order {OrderId} cooked with status {Status}", 
+    order.OrderId, response.Status);
+
+// Use the Service Invocation building block to invoke the endpoint in the pizza-delivery service
+_logger.LogInformation("Starting delivery process for order {OrderId}", order.OrderId);
+    
+response = await _daprClient.InvokeMethodAsync<Order, Order>(
+    HttpMethod.Post,
+    "pizza-delivery",
+    "delivery",
+    order);
+
+_logger.LogInformation("Order {OrderId} delivered with status {Status}", 
+    order.OrderId, response.Status);
+```
+
+Now that the workflow is responsible for orchestrating the service invocation calls more elegantly, you don't need the same behaviour happening in the Storefront service.
 
 ## Run the application
 
-It's time to run all three applications. If the _pizza-storefront_ and the _pizza-kitchen_ services are still running, press **CTRL+C** in each terminal window to stop them. In the terminal, navigate to the folder where the _pizza-storefront_ service located and run the command below:
+It's time to run all five applications. If the `pizza-storefront`, `pizza-kitchen`, `pizza-delivery`, and the `pizza-store`
+services are still running, press **CTRL+C** in each terminal window to stop them.
+
+1. Open a new terminal window, navigate to the `/PizzaOrder` folder and run the command below:
 
 ```bash
-dapr run --app-id pizza-storefront --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-order --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources -- dotnet run
 ```
 
-Open a new terminal window and navigate to the _pizza-kitchen_ folder. Run the command below:
+2. In a new terminal, navigate to the `/PizzaStorefront` folder and run the command below:
 
 ```bash
-dapr run --app-id pizza-kitchen --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-storefront --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources -- dotnet run
 ```
 
-Finally, open a third terminal window and navigate to the _pizza-delivery_ service folder. Run the command below:
+3. Open a new terminal window and navigate to `/PizzaKitchen` folder. Run the command below:
 
 ```bash
-dapr run --app-id pizza-delivery --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-kitchen --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources -- dotnet run
+```
+
+4. Open a fourth terminal window and navigate to `/PizzaDelivery` folder. Run the command below:
+
+```bash
+dapr run --app-id pizza-delivery --app-protocol http --app-port 8004 --dapr-http-port 3504 --resources-path ../resources -- dotnet run
+```
+
+5. Open a fifth terminal window and navigate to `/PizzaWorkflow` folder. Run the command below:
+
+```bash
+dapr run --app-id pizza-workflow --app-protocol http --app-port 8005 --dapr-http-port 3505 --resources-path ../resources -- dotnet run
 ```
 
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
 
-Check the Dapr and application logs for all three services. You should now see the pubsub component loaded in the Dapr logs:
-
-```bash
-INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-storefront instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
-```
-
 ## Test the service
 
 ### Use VS Code REST Client
 
-Open `PizzaStore.rest` and create a new order, similar to what was done previous challenges.
+Open `Endpoints.http` and start a new workflow sending the request on `### Start a new pizza order workflow
+`.
 
-Navigate to the _pizza-storefront_ terminal, where you should see the following logs pop up with all the events being updated:
-
-```bash
-== APP == Posting order: 
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Sent to kitchen
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Cooking
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Returned: OK
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Ready for delivery
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivery started
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Order picked up by driver
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event En-route
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Nearby
-== APP == Processing order: ade479f5-7e4a-432c-b2f3-c1fa44241d4d
-== APP == Saving order ade479f5-7e4a-432c-b2f3-c1fa44241d4d with event Delivered
-== APP == Returned: OK
-```
-
-### Use _cURL_
-
-Open a fourth terminal window and create a new order using cURL:
+Navigate to the `pizza-workflow` terminal, where you should see the following logs pop up with all the events being updated:
 
 ```bash
-curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
-    -X POST \
-    http://localhost:8001/orders
+== APP == info: PizzaWorkflow.Controllers.WorkflowController[0]
+== APP ==       Starting workflow for order 123
+INFO[0014] pizza-order-123: starting new 'PizzaOrderingWorkflow' instance with ID = 'pizza-order-123'.  app_id=pizza-workflow instance=diagrid.local scope=wfengine.durabletask.backend type=log ver=1.14.4
+== APP == info: PizzaWorkflow.Controllers.WorkflowController[0]
+== APP ==       Workflow started successfully for order 123
+== APP == info: PizzaWorkflow.Activities.StorefrontActivity[0]
+== APP ==       Starting ordering process for order 123
+== APP == info: PizzaWorkflow.Activities.StorefrontActivity[0]
+== APP ==       Order 123 processed with status confirmed
+== APP == info: PizzaWorkflow.Activities.CookingActivity[0]
+== APP ==       Starting cooking process for order 123
+== APP == info: PizzaWorkflow.Activities.CookingActivity[0]
+== APP ==       Order 123 cooked with status cooked
+== APP == info: PizzaWorkflow.Activities.ValidationActivity[0]
+== APP ==       Starting validation process for order 123
+== APP == info: PizzaWorkflow.Activities.ValidationActivity[0]
+== APP ==       Validation state saved for order 123
 ```
 
-## Run the front-end application
-
-Now that you've completed all the challenges, its time to order a pizza using the UI.
-
-With all services still running, navigate to `/PizzaFrontend`, open a new terminal, and run:
+Once the validation stage arrives, send a request under `### Validate pizza (approve)` to move the workflow forward. You shopuld see the logs being updated:
 
 ```bash
-python3 -m http.server 8080
+== APP == info: PizzaWorkflow.Controllers.WorkflowController[0]
+== APP ==       Raising validation event for order 123. Approved: True
+== APP == info: PizzaWorkflow.Controllers.WorkflowController[0]
+== APP ==       Validation event raised successfully for order 123
+== APP == info: PizzaWorkflow.Activities.DeliveryActivity[0]
+== APP ==       Starting delivery process for order 123
+== APP == info: PizzaWorkflow.Activities.DeliveryActivity[0]
+== APP ==       Order 123 delivered with status delivered
+INFO[0208] pizza-order-123: 'PizzaOrderingWorkflow' completed with a COMPLETED status.  app_id=pizza-workflow instance=diagrid.local scope=wfengine.durabletask.backend type=log ver=1.14.4
+INFO[0208] Workflow Actor 'pizza-order-123': workflow completed with status 'ORCHESTRATION_STATUS_COMPLETED' workflowName 'PizzaOrderingWorkflow'  app_id=pizza-workflow instance=diagrid.local scope=dapr.wfengine.backend.actors type=log ver=1.14.4
 ```
-
-Open a browser window and navigate to `localhost:8080`, fill-out your order on the right-hand side and click `Place Order`. All the events will pop-up at the bottom for you.
-
-![front-end](/imgs/front-end.png)
 
 ## Dapr multi-app run
 
-Instead of opening multiple terminals to run the services, you can take advantage of a great Dapr CLI feature: [multi-app run](https://docs.dapr.io/developing-applications/local-development/multi-app-dapr-run/multi-app-overview/). This enables you run all three services with just one command!
-
-In the parent folder, create a new file called `dapr.yaml`. Add the following content to it:
+Open the multi-run app file `dapr.yaml` and include the workflow service to it:
 
 ```yaml
 version: 1
@@ -469,20 +647,30 @@ common:
   # Uncomment the following line if you are running Consul for service naming resolution
   # configFilePath: ./resources/config/config.yaml
 apps:
-  - appDirPath: ./PizzaStore/
-    appID: pizza-storefront
+  - appDirPath: ./PizzaOrder/
+    appID: pizza-order
     daprHTTPPort: 3501
     appPort: 8001
     command: ["dotnet", "run"]
+  - appDirPath: ./PizzaStorefront/
+    appID: pizza-storefront
+    daprHTTPPort: 3502
+    appPort: 8002
+    command: ["dotnet", "run"]
   - appDirPath: ./PizzaKitchen/
     appID: pizza-kitchen
-    appPort: 8002
-    daprHTTPPort: 3502
+    appPort: 8003
+    daprHTTPPort: 3503
     command: ["dotnet", "run"]
   - appDirPath: ./PizzaDelivery/
     appID: pizza-delivery
-    appPort: 8003
-    daprHTTPPort: 3503
+    appPort: 8004
+    daprHTTPPort: 3504
+    command: ["dotnet", "run"]
+  - appDirPath: ./PizzaWorkflow/
+    appID: pizza-workflow
+    appPort: 8005
+    daprHTTPPort: 3505
     command: ["dotnet", "run"]
 ```
 
@@ -492,7 +680,7 @@ Stop the services, if they are running, and enter the following command in the t
 dapr run -f .
 ```
 
-All three services will run at the same time and log events at the same terminal window.
+All five services will run at the same time and log events at the same terminal window.
 
 ## Next steps
 

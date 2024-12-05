@@ -300,13 +300,13 @@ spec:
 It's time to run all four applications. If the `pizza-storefront`, `pizza-kitchen`, `pizza-delivery`, and the `pizza-store` 
 services are still running, press **CTRL+C** in each terminal window to stop them.
 
-1. Open a new terminal window, navigae to the `/PizzaOrder` folder and run the command below:
+1. Open a new terminal window, navigate to the `/PizzaOrder` folder and run the command below:
 
 ```bash
 dapr run --app-id pizza-order --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources -- dotnet run
 ```
 
-2. In your terminal, ensure you are in the `/PizzaStorefront` folder and run the command below:
+2. In a new terminal, navigate to the `/PizzaStorefront` folder and run the command below:
 
 ```bash
 dapr run --app-id pizza-storefront --app-protocol http --app-port 8002 --dapr-http-port 3502 --resources-path ../resources -- dotnet run
@@ -318,7 +318,7 @@ dapr run --app-id pizza-storefront --app-protocol http --app-port 8002 --dapr-ht
 dapr run --app-id pizza-kitchen --app-protocol http --app-port 8003 --dapr-http-port 3503 --resources-path ../resources -- dotnet run
 ```
 
-4. Open a third terminal window and navigate to `/PizzaDelivery` folder. Run the command below:
+4. Open a fourth terminal window and navigate to `/PizzaDelivery` folder. Run the command below:
 
 ```bash
 dapr run --app-id pizza-delivery --app-protocol http --app-port 8004 --dapr-http-port 3504 --resources-path ../resources -- dotnet run
@@ -328,7 +328,7 @@ dapr run --app-id pizza-delivery --app-protocol http --app-port 8004 --dapr-http
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` on your Dapr run command.
 
-Check the Dapr and application logs for all three services. You should now see the pubsub component loaded in the Dapr logs:
+Check the Dapr and application logs for all four services. You should now see the pubsub component loaded in the Dapr logs:
 
 ```bash
 INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-storefront instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
