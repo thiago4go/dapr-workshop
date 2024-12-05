@@ -16,7 +16,7 @@ To learn more about the Workflow building block, refer to the [Dapr docs](https:
 
 ## Import the required libraries
 
-Navigate to the `PizzaWorkflow` folder and run the command below in a terminal:
+Navigate to the `challenge-4/PizzaWorkflow` folder and run the command below in a terminal:
 
 ```bash
 dotnet add package Dapr.Workflow
@@ -61,7 +61,7 @@ Each task will be a separate activity. These activities will be executed in sequ
 
 ### Create the Cooking Activity
 
-Inside the `/Activities` folder, create a new file called `CookingActivity.cs`. Copy and paste the following content:
+Create an `Activities` folder inside the PizzaWorkflow folder. Inside this `/Activities` folder, create a new file called `CookingActivity.cs`. Copy and paste the following content:
 
 ```csharp
 using Dapr.Client;
@@ -298,7 +298,7 @@ await _daprClient.SaveStateAsync(
 
 Now let's move to the Workflow itself. The Dapr Workflow engine will take care of scheduling and execution of the order tasks, including managing failures and retries.
 
-Inside the `/Workflows` folder, create a file called `PizzaOrderingWorkflow.cs`. Populate with the code below:
+Create a `Workflows` folder inside the `PizzaWorkflow` folder. Inside this `/Workflows` folder, create a file called `PizzaOrderingWorkflow.cs`. Populate with the code below:
 
 ```csharp
 using Dapr.Workflow;
