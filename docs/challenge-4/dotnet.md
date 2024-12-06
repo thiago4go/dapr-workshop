@@ -429,7 +429,7 @@ catch (Exception ex)
 
 ## Creating the controller
 
-In this section, you will create endpoints to manage the workflow status. Open the file `WorkflowControlle.cs` inside the `/Controllers` folder.
+In this section, you will create endpoints to manage the workflow status. Open the file `WorkflowController.cs` inside the `/Controllers` folder.
 
 1. Inside the `StartOrder` endpoint, replace the `TODO:` comment with the code below:
 
