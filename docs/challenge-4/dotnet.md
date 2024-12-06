@@ -16,7 +16,7 @@ To learn more about the Workflow building block, refer to the [Dapr docs](https:
 
 ## Import the required libraries
 
-Navigate to the `challenge-4/PizzaWorkflow` folder and run the command below in a terminal:
+Navigate to the `/PizzaWorkflow` folder and run the command below in a terminal:
 
 ```bash
 dotnet add package Dapr.Workflow
@@ -379,7 +379,7 @@ public class PizzaOrderingWorkflow : Workflow<Order, Order>
 public class PizzaOrderingWorkflow : Workflow<Order, Order>
 ```
 
-2. Every Activity is called using `context.CallActivityAsync` passing the Activity name and the order as an attribute. Also, every Activity call has a vaidation at the end, that determines if the step was successfully completed or not:
+2. Every Activity is called using `context.CallActivityAsync` passing the Activity name and the order as an attribute. Also, every Activity call has a validation at the end, that determines if the step was successfully completed or not:
 
 ```csharp
 var orderResult = await context.CallActivityAsync<Order>(
@@ -595,7 +595,7 @@ dapr run --app-id pizza-workflow --app-protocol http --app-port 8005 --dapr-http
 
 ### Use VS Code REST Client
 
-Open `Endpoints.http` and start a new workflow sending the request on `### Start a new pizza order workflow
+Open `Endpoints.http` and start a new workflow sending the request on `Start a new pizza order workflow
 `.
 
 Navigate to the `pizza-workflow` terminal, where you should see the following logs pop up with all the events being updated:

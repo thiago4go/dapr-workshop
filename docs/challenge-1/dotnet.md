@@ -10,7 +10,7 @@ In this challenge, you will:
 - Update the `pizza-manager` application to use the Dapr State Management API.
 - Run the app locally using the Dapr CLI.
 
-<img src="../../imgs/challenge-1.png" width=50%>
+<img src="../../imgs/challenge-1.png" width=20%>
 
 To learn more about the Dapr State Management Building Block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
 
@@ -211,7 +211,9 @@ INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-stor
 
 ### Use VS Code REST Client
 
-Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `### Direct Pizza Order Endpoint (for testing)`:
+Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `Direct Pizza Order Endpoint (for testing)`:
+
+![send-request](/imgs/rest-request.png)
 
 ```http
 ### Direct Pizza Order Endpoint (for testing)

@@ -9,7 +9,7 @@ In this challenge, you will create three services that will change the status of
 - Create a new service called `pizza-delivery` with a `/delivery` endpoint.
 - Use Dapr's Service Invocation API to call the `/cook` and `/deliver` endpoints from the `pizza-storefront` app.
 
-<img src="../../imgs/challenge-2.png" width=50%>
+<img src="../../imgs/challenge-2.png" width=20%>
 
 To learn more about the Dapr Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
 
@@ -18,6 +18,12 @@ To learn more about the Dapr Service Invocation building block, refer to the [Da
 Navigate to the root of your project. Before you start coding, install the dependencies:
 
 ```bash
+```bash
+# Create virtual environment
+python3 -m venv env
+source env/bin/activate
+
+# Navigate to the service folder and add the Dapr package
 cd pizza-storefront
 pip install -r requirements.txt
 
@@ -107,25 +113,13 @@ This starts with localhost, since the _pizza-storefront_ Dapr sidecar is running
 
 This method will not invoke the `cook` method on the _pizza-kitchen_ application directly. The Dapr sidecar of the _pizza-storefront_ application makes a call to the Dapr sidecar of the _pizza-kitchen_ application. The responsiblity of making the service invocation call is then passed to the sidecar, as the picture below illustrates:
 
-![service-invocation](/imgs/service-invocation.png)
+<img src="../../imgs/service-invocation.png" width=35%>
 
 This way, services only need to communicate to their associated sidecar over localhost and the sidecar handles the service discovery and invocation capabilities.
 
 The same process is applied to invoke the `/deliver` endpoint withing the `pizza-delivery` service.
 
 ## Run the applications
-
-It's now time to run both applications. If the _pizza-storefront_ service is still running, press **CTRL+C** to stop it. In the terminal for the _pizza-storefront_, ensure you're still in the _pizza-storefront_ folder where `app.py` is located and run the command below:
-
-```bash
-dapr run --app-id pizza-storefront --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
-```
-
-In the terminal for the  _pizza-kitchen_ application ensure you are in the _pizza-kitchen_ folder and run the command below:
-
-```bash
-
-```
 
 It's now time to run all three applications.
 

@@ -8,7 +8,7 @@ On the third challenge, your goal is to update the state store with all the even
 - Update the storefront, kitchen, and delivery services to publish a message to the pub/sub.
 - Subscribe to these events in the order service, which is already managing the order state in our state store.
 
-<img src="../../imgs/challenge-3.png" width=75%>
+<img src="../../imgs/challenge-3.png" width=25%>
 
 To learn more about the Publish & Subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
@@ -67,6 +67,8 @@ cd PizzaKitchen
 dotnet add package Dapr.Client
 dotnet add package Dapr.AspNetCore
 
+cd ..
+
 # Navigate to the service folder and add the Dapr package
 cd PizzaDelivery
 dotnet add package Dapr.Client
@@ -97,7 +99,7 @@ using Dapr.Client;
 private readonly DaprClient _daprClient;
 ```
 
-3. Add two contants to hold the names of the pub/sub component and topic you will be publishing the messages to:
+3. Add two constants to hold the names of the pub/sub component and topic you will be publishing the messages to:
 
 ```csharp
 private const string PUBSUB_NAME = "pizzapubsub";
@@ -162,7 +164,7 @@ using Dapr.Client;
 private readonly DaprClient _daprClient;
 ```
 
-3. Add two contants to hold the names of the pub/sub component and topic you will be publishing the messages to:
+3. Add two constants to hold the names of the pub/sub component and topic you will be publishing the messages to:
 
 ```csharp
 private const string PUBSUB_NAME = "pizzapubsub";
@@ -209,7 +211,7 @@ catch (Exception ex)
 
 ## Update the Storefront service to publish messages to the message broker
 
-1. Inside the `PizzaStorefront` service folder, navigate to `/Services/Storefront.cs` and add the pub/sub contants:
+1. Inside the `PizzaStorefront` service folder, navigate to `/Services/Storefront.cs` and add the pub/sub constants:
 
 ```csharp
 private const string PUBSUB_NAME = "pizzapubsub";
@@ -338,8 +340,7 @@ INFO[0000] Component loaded: pizzapubsub (pubsub.redis/v1)  app_id=pizza-storefr
 
 ### Use VS Code REST Client
 
-Open `Endpoints.http` and create a new order sending the request on `### Direct Pizza Store Endpoint (for testing)
-`, similar to what was done previous challenge.
+Open `Endpoints.http` and create a new order sending the request on `Direct Pizza Store Endpoint (for testing)`, similar to what was done previous challenge.
 
 Navigate to the `pizza-order` terminal, where you should see the following logs pop up with all the events being updated:
 

@@ -40,6 +40,11 @@ This is a Dapr Component specification file named `pizzastatestore`. In the _spe
 Now navigate to the `/pizza-order` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
+# Create virtual environment
+python3 -m venv env
+source env/bin/activate
+
+# Navigate to the service folder and add the Dapr package
 cd pizza-order
 pip install -r requirements.txt
 ```
@@ -150,7 +155,7 @@ INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-orde
 
 ### Use VS Code REST Client
 
-Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `### Direct Pizza Order Endpoint (for testing)`:
+Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `Direct Pizza Order Endpoint (for testing)`:
 
 ![send-request](/imgs/rest-request.png)
 

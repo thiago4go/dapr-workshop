@@ -9,7 +9,7 @@ In this challenge, you will create three services that will change the status of
 - Create a new service called `pizza-delivery` with a `/delivery` endpoint.
 - Use Dapr's Service Invocation API to call the `/cook` and `/deliver` endpoints from the `pizza-storefront` app.
 
-<img src="../../imgs/challenge-2.png" width=50%>
+<img src="../../imgs/challenge-2.png" width=20%>
 
 To learn more about the Dapr Service Invocation building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/).
 
@@ -273,7 +273,7 @@ var response = await _daprClient.InvokeMethodAsync<Order, Order>(
 
 The code above wraps an HTTP call to the host `localhost` with the port `3504`. This is not calling the _pizza-delivery_ service directly, but rather the sidecar of the _pizza-storefront_ service. The responsibility of making the service invocation call is then passed to the sidecar, as the picture below illustrates:
 
-![service-invocation](/imgs/service-invocation.png)
+<img src="../../imgs/service-invocation.png" width=35%>
 
 This way, services only need to communicate to their associated sidecar over localhost and the sidecar handles the service discovery and invocation capabilities.
 
