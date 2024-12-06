@@ -10,7 +10,7 @@ You will:
 - Add an external event to validate the quality of the pizza after the cooking proces is done.
 - Query for the workflow status, pause, resume, and cancel the run.
 
-<img src="../../imgs/challenge-3.png" width=75%>
+<img src="../../imgs/workflow.png" width=75%>
 
 To learn more about the Workflow building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/workflow/).
 
