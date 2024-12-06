@@ -525,7 +525,7 @@ builder.Services.AddDaprWorkflow(options =>
 
 ## Remove the service invocation calls from the Storefront service
 
-Inside the `PizzaStorefront` folder, navigate to `/Services/Storefront.cs`. Remove the following lines from `ProcessOrderAsync`:
+Inside the `PizzaStorefront` folder, navigate to `/Services/StorefrontService.cs`. Remove the following lines from `ProcessOrderAsync`:
 
 ```csharp
 _logger.LogInformation("Starting cooking process for order {OrderId}", order.OrderId);
