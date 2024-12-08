@@ -8,7 +8,7 @@ On the third challenge, your goal is to update the state store with all the even
 - Update the storefront, kitchen, and delivery services to publish a message to the pub/sub.
 - Subscribe to these events in the order service, which is already managing the order state in our state store.
 
-<img src="../../imgs/challenge-3.png" width=25%>
+<img src="../../imgs/challenge-3.png" width=50%>
 
 To learn more about the Publish & Subscribe building block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/pubsub/).
 
