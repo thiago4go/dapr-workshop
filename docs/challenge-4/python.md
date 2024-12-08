@@ -77,7 +77,7 @@ from typing import Dict, Any
 logger = logging.getLogger(__name__)
 ```
 
-### Create the Storefront, Kitchen, adn Deliver activities.
+### Create the Storefront, Kitchen, and Deliver activities.
 
 1. Create the Storefront activity by including the lines of code below:
 
