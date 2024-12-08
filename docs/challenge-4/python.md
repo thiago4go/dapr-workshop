@@ -64,7 +64,7 @@ Workflow activities are the basic unit of work in a workflow and are the tasks t
 
 Each task will be a separate activity. These activities will be executed in sequence since the order is imporant. Other [workflow patterns](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-patterns/) can be used with Dapr Workflow, where activities are executed in parallel, or activities are called in a loop, but these are not relevant for this challenge.
 
-Create a new file called `pizza_activities.py`. Add the following liones of code to the top to import the required libraries and create the logger:
+Create a new file called `pizza_activities.py` inside the `pizza-workflow` directory. Add the following lines of code to the top to import the required libraries - Dapr Client and Dapr Workflow - and create the logger:
 
 ```python
 from dapr.ext.workflow import WorkflowActivityContext
