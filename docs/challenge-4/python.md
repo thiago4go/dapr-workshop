@@ -347,12 +347,13 @@ We are using the Dapr Client to call `start_workflow` passing:
 2. Inside the `validate_pizza` endpoint, replace the `TODO:` comment with the code below:
 
 ```python
-client.raise_workflow_event(
-  workflow_component="dapr",
-  instance_id=f"pizza-order-{order_id}",
-  event_name="ValidationComplete",
-  event_data=validation_data
-)
+with DaprClient() as client:
+  client.raise_workflow_event(
+    workflow_component="dapr",
+    instance_id=f"pizza-order-{order_id}",
+    event_name="ValidationComplete",
+    event_data=validation_data
+  )
 ```
 
 We are using the Dapr Client to call `raise_workflow_event` passing:
