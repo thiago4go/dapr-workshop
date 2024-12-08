@@ -40,11 +40,13 @@ This challenge will focus on synchronous communication between services using th
 
 In the third challenge, you will add a Pub/Sub component to the `pizza-order` service. You will use the [Dapr Publish & Subscribe Building Block](https://docs.dapr.io/developing-applications/building-blocks/pubsub/) to publish events to a Redis Streams message broker from `pizza-storefront`, `pizza-kitchen`, and `pizza-delivery`. These events represent each stage in the pizza order, cooking, and delivery process. For every event published, the `pizza-order` service will subscribe to it and update the current order status in the Redis State Store.
 
-<img src="/imgs/challenge-3.png" width=75%>
+<img src="/imgs/challenge-3.png" width=60%>
 
 ### Challenge 4: Workflows
 
 Now you will modify the application to orchestrate the process of ordering, cooking, and delivering the pizza to use [Dapr's Workflow Building Block](https://docs.dapr.io/developing-applications/building-blocks/workflow/). With that you will guarantee that every step happens in a particular order. A validation state will also be created to guarantee that the pizza was cooked properly before it is delivered.
+
+<img src="/imgs/workflow.png" width=75%>
 
 ## Get started
 
