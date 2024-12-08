@@ -16,7 +16,7 @@ To learn more about the Workflow building block, refer to the [Dapr docs](https:
 
 ## Import the required libraries
 
-Navigate to the `/pizza-workflow` folder and run the command below in a terminal:
+Navigate to the root folder of your project and run the command below in a terminal:
 
 ```bash
 # Create virtual environment
