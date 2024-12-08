@@ -16,7 +16,7 @@ On completion of this workshop, you will understand how three of the most popula
 
 You will build five microservices to simulate the process of ordering a pizza:
 
-- The `pizza-storefront` service serves as an entry point for customers to order a new pizza.orchestrates the entire process of the pizza ordering, cooking and delivery. It interacts with the other services to ensure they are completing their tasks.
+- The `pizza-storefront` service serves as an entry point for customers to order a new pizza.
 - The `pizza-kitchen` service has a single responsibility, to cook the pizza.
 - The `pizza-delivery` service manages the delivery process, from picking up the pizza at the kitchen to delivering it to the customer's doorstep.
 - The `pizza-order` service manages the order status in the state store.
@@ -26,7 +26,7 @@ You will build five microservices to simulate the process of ordering a pizza:
 
 ### Challenge 1: State Management
 
-You will start the workshop by creating the `pizza-order` service. It is responsible managing the  order state and saving it to a Redis database, using the [Dapr State Management Building Block](https://docs.dapr.io/developing-applications/building-blocks/state-management/). You will learn how to create a Dapr Component specification, and how to use the Dapr SDK to save and retrieve an item using the State Store API.
+You will start the workshop by creating the `pizza-order` service. It is responsible for managing the  order state and saving it to a Redis database, using the [Dapr State Management Building Block](https://docs.dapr.io/developing-applications/building-blocks/state-management/). You will learn how to create a Dapr Component specification, and how to use the Dapr SDK to save and retrieve an item using the State Store API.
 
 <img src="/imgs/challenge-1.png" width=50%>
 
