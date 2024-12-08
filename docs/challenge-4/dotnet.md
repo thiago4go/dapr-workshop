@@ -22,7 +22,7 @@ Navigate to the `/PizzaWorkflow` folder and run the command below in a terminal:
 dotnet add package Dapr.Workflow
 ```
 
-> The `Dapr.Workflow` package depends on the `Dapr.AspNetCore` and `Dapr.Client` packages. In this challengde you'll use Dapr types and methods from these three packages.
+> The `Dapr.Workflow` package depends on the `Dapr.AspNetCore` and `Dapr.Client` packages. In this challenge you'll use Dapr types and methods from these three packages.
 
 ## Modify the state store component to accept workflows
 
