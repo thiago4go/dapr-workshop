@@ -63,9 +63,11 @@ During the workshop you will run the services in the solution on your local mach
 
 | Service                    | Application port | Dapr sidecar HTTP port  |
 |----------------------------|------------------|------------------------|
-| pizza-store      | 8001             | 3501                   |
-| pizza-kitchen      | 8002             | 3502                  |
-| pizza-delivery | 8003             | 3503               |
+| pizza-order      | 8001             | 3501                   |
+| pizza-storefront      | 8002             | 3502                  |
+| pizza-kitchen | 8003             | 3503               |
+| pizza-delivery | 8004             | 3504               |
+| pizza-workflow | 8005             | 3505               |
 
 If you're on Windows with Hyper-V enabled, you might run into an issue that you're not able to use one (or more) of these ports. This could have something to do with aggressive port reservations by Hyper-V. You can check whether or not this is the case by executing this command:
 
@@ -77,8 +79,8 @@ If you see one (or more) of the ports shown as reserved in the output, fix it by
 
 ```powershell
 dism.exe /Online /Disable-Feature:Microsoft-Hyper-V
-netsh int ipv4 add excludedportrange protocol=tcp startport=8001 numberofports=3
-netsh int ipv4 add excludedportrange protocol=tcp startport=3501 numberofports=3
+netsh int ipv4 add excludedportrange protocol=tcp startport=8001 numberofports=5
+netsh int ipv4 add excludedportrange protocol=tcp startport=3501 numberofports=5
 dism.exe /Online /Enable-Feature:Microsoft-Hyper-V /All
 ```
 
@@ -101,7 +103,7 @@ docker rm dtc-consul -f
 You can verify whether Consul is used for name-resolution by searching for the occurrence of the following line in the Dapr sidecar logging:
 
 ```bash
-ℹ️  Starting Dapr with id pizza-kitchen. HTTP Port: 3502.
+ℹ️  Starting Dapr with id pizza-kitchen. HTTP Port: 3503.
 ...
 INFO[0000] Initialized name resolution to consul ...
 ...

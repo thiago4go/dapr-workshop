@@ -7,10 +7,10 @@
 In this challenge, you will:
 
 - Configure a State Store component using a local Redis instance to save, get, and delete a pizza order.
-- Update the `pizza-store` application to use the Dapr State Management API.
+- Update the `pizza-manager` application to use the Dapr State Management API.
 - Run the app locally using the Dapr CLI.
 
-<img src="../../imgs/challenge-1.png" width=50%>
+<img src="../../imgs/challenge-1.png" width=20%>
 
 To learn more about the Dapr State Management Building Block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
 
@@ -37,38 +37,31 @@ This is a Dapr Component specification file named `pizzastatestore`. In the _spe
 
 ## Install dependencies
 
-Navigate to the `/PizzaStore` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
+Navigate to the `/PizzaOrder` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
-cd PizzaStore
+cd PizzaOrder
 
 dotnet add package Dapr.Client
+dotnet add package Dapr.AspNetCore
 ```
 
 ## Register the DaprClient
 
-Open `Program.cs` and add this using statement to the top:
+Open `Program.cs` and add the `DaprClient` registration to the `ServiceCollection`:
 
 ```csharp
-using Dapr.Client;
-```
-
-In the same file add the `DaprClient` registration to the `ServiceCollection`:
-
-```csharp
-builder.Services.AddSingleton<DaprClient>(new DaprClientBuilder().Build());
+builder.Services.AddControllers().AddDapr();
 ```
 
 This enables the dependency injection of the `DaprClient` in other classes.
 
 ## Create the service
 
-Inside `Controllers/PizzaStoreController.cs` let's add a couple of import statements.
+Inside `Services/OrderStateService.cs` import the Dapr client.
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
 using Dapr.Client;
-using System.Text.Json;
 ```
 
 This will import the _Dapr.Client_ library from the [Dapr Dotnet SDK](https://github.com/dapr/dotnet-sdk). That is what you will use to manage the state in the Redis instance.
@@ -79,127 +72,128 @@ Create a private field for the `DaprClient` inside the controller class:
 private readonly DaprClient _daprClient;
 ```
 
-Update the `PizzaStoreController` constructor to include the `DaprClient` and to set the private field:
+Update the `OrderStateService` constructor to include the `DaprClient` and to set the private field:
 
 ```csharp
-public PizzaStoreController(DaprClient daprClient, ILogger<PizzaStoreController> logger)
-    {
-        _logger = logger;
-        _daprClient = daprClient;
-    }
+public OrderStateService(DaprClient daprClient, ILogger<OrderStateService> logger)
+{
+    _daprClient = daprClient;
+    _logger = logger;
+}
 ```
 
 ## Manage state
 
-Create three new functions: `SaveOrderToStateStore`, `GetOrderFromStateStore`, and `DeleteOrderFromStateStore`.
+You will now update three existing functions: `UpdateOrderStateAsync`, `GetOrderAsync`, and `DeleteOrderAsync`.
 
-Start by adding a readonly string to the `PizzaStoreController` class to represent the name of the Dapr state store component defined in the previous step. This name **must** be the same as the `metadata.name` in the Dapr component spec.
+1. Start by adding a readonly string to the `OrderStateService` class to represent the name of the Dapr state store component defined in the previous step. This name **must** be the same as the `metadata.name` in the Dapr component spec.
 
 ```csharp
-private readonly string StateStoreName = "pizzastatestore";
+private readonly string STORE_NAME = "pizzastatestore";
 ```
 
-Under **// -------- Dapr State Store -------- //** add the following lines of code:
+2. `UpdateStateOrderAsync` checks for an existing order, then updates or creates it. Update it with the following code:
 
 ```csharp
-// save order to state store
-private async Task SaveOrderToStateStore(Order order)
+public async Task<Order> UpdateOrderStateAsync(Order order)
 {
-    await _daprClient.SaveStateAsync(StateStoreName, order.OrderId, order);
-    Console.WriteLine("Saving order " + order.OrderId + " with event " + order.Event);
+    try
+    {
+        var stateKey = $"order_{order.OrderId}";
+        
+        // Try to get existing state
+        var existingState = await _daprClient.GetStateAsync<Order>(STORE_NAME, stateKey);
+        if (existingState != null)
+        {
+            // Merge new data with existing state
+            order = MergeOrderStates(existingState, order);
+        }
 
-    return;
+        // Save updated state
+        await _daprClient.SaveStateAsync(STORE_NAME, stateKey, order);
+        _logger.LogInformation("Updated state for order {OrderId} - Status: {Status}", 
+            order.OrderId, order.Status);
+
+        return order;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error updating state for order {OrderId}", order.OrderId);
+        throw;
+    }
 }
+```
 
-// get order from state store
-private async Task<Order> GetOrderFromStateStore(string orderId)
+3. `GetOrderAsync` gets an order from the state store by `orderId`. Update the function with the following:
+
+```csharp
+public async Task<Order?> GetOrderAsync(string orderId)
 {
-    var order = await _daprClient.GetStateEntryAsync<Order>(StateStoreName, orderId);
-    Console.WriteLine("Order result: " + order.Value);
+    try
+    {   
+        // Get order from state store by order ID
+        var stateKey = $"order_{orderId}";
+        var order = await _daprClient.GetStateAsync<Order>(STORE_NAME, stateKey);
+        
+        if (order == null)
+        {
+            _logger.LogWarning("Order {OrderId} not found", orderId);
+            return null;
+        }
 
-    return order.Value;
+        return order;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving order {OrderId}", orderId);
+        throw;
+    }
 }
+```
 
-// delete order from state store
-private async Task DeleteOrderFromStateStore(string orderId)
+4. Finally, update `DeleteOrderAsync` deletes the order by `orderId`:
+
+```csharp
+public async Task<string?> DeleteOrderAsync(string orderId)
 {
-    await _daprClient.DeleteStateAsync(StateStoreName, orderId);
-    Console.WriteLine("Deleted order " + orderId);
+    try
+    {
+        var stateKey = $"order_{orderId}";
 
-    return;
+        // Tries to delete the order from the state store
+        await _daprClient.DeleteStateAsync(STORE_NAME, stateKey);
+        _logger.LogInformation("Deleted state for order {OrderId}", orderId);
+        return orderId;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error deleting order {OrderId}", orderId);
+        throw;
+    }
 }
 ```
 
 The Dapr Client is responsible for the following, respectively:
 
-1. `await _daprClient.SaveStateAsync(StateStoreName, order.OrderId, order);` saves the state to Redis using a key/value pair. It requires the state store name, the order id as a **key**, and a json representation of the order as a **value**.
+1. `await _daprClient.SaveStateAsync(STORE_NAME, stateKey, order);` saves the state to Redis using a key/value pair. It requires the state store name, the order id as a **key**, and a json representation of the order as a **value**.
 
-2. `await _daprClient.GetStateEntryAsync<Order>(StateStoreName, orderId);` retrieves the state from the store. It requires a key and the state store name.
+2. `await _daprClient.GetStateAsync<Order>(STORE_NAME, stateKey);` retrieves the state from the store. It requires a key and the state store name.
 
-3. `await _daprClient.DeleteStateAsync(StateStoreName, orderId);` deletes the state from the store. It also requires a key and the state store name.
-
-## Create the app routes
-
-Before testing the application, create routes to be used by the state store from the frontend and to call the REST APIs directly. Add three new routes below **// -------- Application routes -------- //**:
-
-```csharp
-// App route: Post order
-[HttpPost("/orders", Name = "PostOrder")]
-public async Task<ActionResult> PostOrder([FromBody] Order order)
-{
-    if (order is null)
-    {
-        return BadRequest();
-    }
-
-    // create a new order id
-    order.OrderId = Guid.NewGuid().ToString();
-    order.Event = "Sent to kitchen";
-
-    Console.WriteLine("Posting order: " + order.Address);
-
-    // Save order to state store
-    await SaveOrderToStateStore(order);
-
-    return Ok(order);
-}
-
-//App route: Get order by order id
-[HttpGet("/orders/{orderId}", Name = "GetOrderByOrderId")]
-public async Task<ActionResult<Order>> GetOrderByOrderId(string orderId)
-{
-    var order = await GetOrderFromStateStore(orderId);
-    if (order == null)
-    {
-        return NotFound();
-    }
-    return Ok(order);
-}
-
-//App route: delete order by order id
-[HttpDelete("/orders/{orderId}", Name = "DeleteOrderByOrderId")]
-public async Task<ActionResult> DeleteOrderByOrderId(string orderId)
-{
-    await DeleteOrderFromStateStore(orderId);
-    return Ok();
-}
-```
-
-To save the event generate a new order GUID and set a new event: _Sent to Kitchen_. You will use these events in upcoming challenges.
+3. `await _daprClient.DeleteStateAsync(STORE_NAME, stateKey);` deletes the state from the store. It also requires a key and the state store name.
 
 ## Run the application
 
-Open a new terminal and navigate to the `/PizzaStore` folder. Use the Dapr CLI to run the following command:
+Open a new terminal and navigate to the `/PizzaOrder` folder. Use the Dapr CLI to run the following command:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
+dapr run --app-id pizza-order --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- dotnet run
 ```
 
 > [!IMPORTANT]
 > If you are using Consul as a name resolution service, add `--config ../resources/config/config.yaml` before `-- dotnet run` in your Dapr run command.
 
 This command sets:
-    - the app-id as `pizza-store`
+    - the app-id as `pizza-storefront`
     - the app-protocol to `http`
     - an app-port of `8001` for Dapr communication into the app
     - an http-port of `3501` for Dapr API communication from the app
@@ -209,7 +203,7 @@ Look for the log entry below to ensure that the state store component was loaded
 
 ```bash
 ...
-INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
+INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-storefront instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ...
 ```
 
@@ -217,17 +211,28 @@ INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-stor
 
 ### Use VS Code REST Client
 
-Open the `PizzaStore.rest` file located in the root of the repository and place a new order by clicking the button `Send request` under _Place a new order_:
+Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `Direct Pizza Order Endpoint (for testing)`:
 
 ![send-request](/imgs/rest-request.png)
 
-Once an order is posted, the _Order ID_ is extracted from the response body and assigned to the @order-id variable:
+```http
+### Direct Pizza Order Endpoint (for testing)
+POST {{pizzaOrderUrl}}/order
+Content-Type: application/json
 
-```bash
-@order-id = {{postRequest.response.body.order_id}}
+{
+    "orderId": "123",
+    "pizzaType": "pepperoni",
+    "size": "large",
+    "customer": {
+        "name": "John Doe",
+        "address": "123 Main St",
+        "phone": "555-0123"
+    }
+}
 ```
 
-This allows you to immediately run a `GET` or `DELETE` request with the correct _Order ID_. To retrieve and delete the order, run the corresponding requests.
+Run the `GET` and `DELETE` requests situated below to get and delete the order as well.
 
 ### Use _cURL_
 
@@ -235,17 +240,17 @@ Run the command below to create a new order:
 
 ```bash
 curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -d '{ "orderId": "123", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
     -X POST \
-    http://localhost:8001/orders
+    http://localhost:8001/order
 ```
 
-Copy the order-id generated and run the following command to get the newly created order:
+Get:
 
 ```bash
 curl -H 'Content-Type: application/json' \
     -X GET \
-    http://localhost:8001/orders/<order-id>
+    http://localhost:8001/order/123
 ```
 
 Finally, delete the order:
@@ -253,7 +258,7 @@ Finally, delete the order:
 ```bash
 curl -H 'Content-Type: application/json' \
     -X DELETE \
-    http://localhost:8001/orders/<order-id>
+    http://localhost:8001/order/123
 ```
 
 ### Visualize the data
@@ -262,10 +267,6 @@ If you downloaded Redis Insight, you can visualize the new order there:
 
 ![redis-insight](/imgs/redis-insight.png)
 
-## Bonus challenge - Use the Dapr State Managment HTTP API
-
-You've now used the Dapr SDK to interact with the State Management API. Instead of using the SDK you can also use the Dapr HTTP API directly. The `DaprAPIs.rest` file in the root of the repository contains some examples how to interact with the [State Management HTTP API](https://docs.dapr.io/reference/api/state_api/).  
-
 ## Next steps
 
-Create a new service to cook the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!
+Create a new service to create the order, cook, and deliver the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!

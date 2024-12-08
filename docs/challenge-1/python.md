@@ -7,7 +7,7 @@
 In this challenge, you will:
 
 - Configure a State Store component using a local Redis instance to save, get, and delete a pizza order.
-- Update the `pizza-store` application to use the Dapr State Management API.
+- Update the `pizza-order` application to use the Dapr State Management API.
 - Run the app locally using the Dapr CLI.
 
 <img src="../../imgs/challenge-1.png" width=50%>
@@ -37,135 +37,109 @@ This is a Dapr Component specification file named `pizzastatestore`. In the _spe
 
 ## Install dependencies
 
-Now navigate to the `/pizza-store` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
+Now navigate to the `/pizza-order` directory. This folder contains all the files you need for your first service. Before beginning to code, install the Dapr dependencies by running the following in a new terminal window:
 
 ```bash
-cd pizza-store
+# Create virtual environment
+python3 -m venv env
+source env/bin/activate
+
+# Navigate to the service folder and add the Dapr package
+cd pizza-order
 pip install -r requirements.txt
 ```
 
 ## Create the service
 
-Open `/pizza-store/app.py`. Update all the `from` and `import` lines:
+Open `/pizza-order/app.py`. Import the `DaprClient` library by including the line below:
 
 ```python
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 from dapr.clients import DaprClient
-
-import uuid
-import logging
-import json
 ```
 
 This will import _DaprClient_ from _dapr.clients_. That is what you will use to manage the state in the Redis instance.
 
 ## Manage state
 
-Create three new functions: `save_order`, `get_order`, and `delete_order`.
+This file has 4 routes:
 
-Start by creating a const that refers to the state store component:
+- `POST /order-sub`: used to subscribe to pub/sub messages. We will cover this on Challenge 3.
+- `POST /order`: creates a new order.
+- `GET /order/<order_id>`: gets an order by id.
+- `DELETE /order/<order_id>`: deletes an order by id.
+
+In this chapter we will focus on creating, retrieving, and deleting an order.
+
+1. Start by creating a const that refers to the Dapr state store component defined in the previous step. This name **must** be the same as the `metadata.name` in the Dapr component spec.
 
 ```python
 DAPR_STORE_NAME = 'pizzastatestore'
 ```
 
-The name given to this const is the same name configured in the `statestore.yaml` file, created in the step above.
-
-Under **# Dapr State Store #** add the following lines of code:
+2. `create_order` creates or updates an order. Update the `TODO:` section with the following code:
 
 ```python
-def save_order(order_id, order_data):
-    with DaprClient() as client:
-        # Save state 
-        client.save_state(DAPR_STORE_NAME, order_id, json.dumps(order_data))
-        logging.info('Saving Order %s with event %s', order_id, order_data['event'])
-
-        return order_id
-
-def get_order(order_id):
-    with DaprClient() as client:
-        # Get state
-        result = client.get_state(DAPR_STORE_NAME, order_id)
-        logging.info('Order result - %s', str(result.data))
-
-        return json.loads(result.data)
+# Save order state
+with DaprClient() as client:
+    client.save_state(
+        store_name=DAPR_STORE_NAME,
+        key=f"order_{order_id}",
+        value=json.dumps(order_data)
+    )
     
-def delete_order(order_id):
-    with DaprClient() as client:
-        # Delete state
-        client.delete_state(DAPR_STORE_NAME, order_id)
-        logging.info('Order deleted - %s', order_id)
-
-        return order_id
+    logger.info(f"Created order {order_id}")
 ```
+
+3. `get_order` retrieves an order from the state store. Update the `TODO:` section with the code below:
+
+```python
+with DaprClient() as client:
+    state = client.get_state(
+        store_name=DAPR_STORE_NAME,
+        key=f"order_{order_id}"
+    )
+    
+    if not state.data:
+        return jsonify({'error': 'Order not found'}), 404
+        
+    order_data = json.loads(state.data)
+    return jsonify(order_data)
+```
+
+4. `delete_order` deletes the order from the state store. Update the `TODO:` section with the code below:
+
+```python
+with DaprClient() as client:
+    client.delete_state(
+        store_name=DAPR_STORE_NAME,
+        key=f"order_{order_id}"
+    )
+    
+    return jsonify({'success': True})
+```
+
 
 The Dapr Client is responsible for the following, respectively:
 
-1. `client.save_state(DAPR_STORE_NAME, order_id, str(order_data))`; saves the state the Redis using a key/value pair. It requires the state store name, the order id as a **key**, and a json representation of the order as a **value**.
+1. `client.save_state(store_name=DAPR_STORE_NAME key=f"order_{order_id}", value=json.dumps(order_data))` saves the state the Redis using a key/value pair. It requires the state store name, the order id as a **key**, and a json representation of the order as a **value**.
 
-2. `result = client.get_state(DAPR_STORE_NAME, order_id)`; retrieves the state from the store. It requires a key and the state store name.
+2. `result = client.get_state(store_name=DAPR_STORE_NAME key=f"order_{order_id}")` retrieves the state from the store. It requires a key and the state store name.
 
-3. `client.delete_state(DAPR_STORE_NAME, order_id)`; deletes the state from the store. It also requires a key and the state store name.
-
-## Create the app routes
-
-Before testing the application, create routes to be used by the state store from the frontend and to call the REST APIs directly. Add three new routes below **# Application routes #**:
-
-```python
-# Create a new order
-@app.route('/orders', methods=['POST'])
-def createOrder():
-
-    # Create a new order id
-    order_id = str(uuid.uuid4())
-    order_data = request.json
-
-    # add order id to order data and set a new event to it
-    order_data['order_id'] = order_id
-    order_data['event'] = 'Sent to kitchen'
-
-    # Save order to state store
-    save_order(order_id, order_data)
-
-    return jsonify({'orderId': order_id})
-
-# Get order by id
-@app.route('/orders/<order_id>', methods=['GET'])
-def getOrder(order_id):
-    if order_id:
-        result = get_order(order_id)
-
-        return jsonify(result)
-    
-    return jsonify({'success': False, 'message': 'Missing order id'}), 404
-
-# Delete order by id
-@app.route('/orders/<order_id>', methods=['DELETE'])
-def deleteOrder(order_id):
-    if order_id:
-        delete_order(order_id)   
-
-        return jsonify({'orderId': order_id})
-    
-    return jsonify({'success': False, 'message': 'Missing order id'}), 404
-```
-
-To save the event a new order UUID is generated and set a new event: _Sent to Kitchen_. You will use these events in upcoming challenges.
+3. `client.delete_state(store_name=DAPR_STORE_NAME key=f"order_{order_id}")` deletes the state from the store. It also requires a key and the state store name.
 
 ## Run the application
 
-Now, open a terminal and navigate to the `/pizza-store` folder where `app.py` is located. Use the Dapr CLI to run the following command:
+Now, open a terminal and navigate to the `/pizza-order` folder where `app.py` is located. Use the Dapr CLI to run the following command:
 
 ```bash
-dapr run --app-id pizza-store --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
+dapr run --app-id pizza-order --app-protocol http --app-port 8001 --dapr-http-port 3501 --resources-path ../resources  -- python3 app.py
 ```
 
 > [!IMPORTANT]
 > If you are using Consul as a naming resolution service, add `--config ../resources/config/config.yaml` before `-- python3 app.py` on your Dapr run command.
 
 This command sets:
-  - the app-id as `pizza-store`
+  - the app-id as `pizza-order`
   - the app-protocol to `http`
   - an app-port of `8001` for Dapr communication into the app
   - an http-port of `3501` for Dapr API communication from the app
@@ -174,24 +148,35 @@ This command sets:
 Look for the log entry below to guarantee that the state store component was loaded successfully:
 
 ```bash
-INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-store instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
+INFO[0000] Component loaded: pizzastatestore (state.redis/v1)  app_id=pizza-order instance=diagrid.local scope=dapr.runtime.processor type=log ver=1.14.4
 ```
 
 ## Test the service
 
 ### Use VS Code REST Client
 
-Open the `PizzaStore.rest` file located in the root of the repository and place a new order by clicking the button `Send request` under _Place a new order_:
+Open the `Endpoints.http` file located in the root of the repository and place a new order by clicking the button `Send request` under `Direct Pizza Order Endpoint (for testing)`:
 
 ![send-request](/imgs/rest-request.png)
 
-Once an order is posted, the _Order ID_ is extracted from the response body and assigned to the @order-id variable:
+```http
+### Direct Pizza Order Endpoint (for testing)
+POST {{pizzaOrderUrl}}/order
+Content-Type: application/json
 
-```bash
-@order-id={{postRequest.response.body.orderId}}
+{
+    "orderId": "123",
+    "pizzaType": "pepperoni",
+    "size": "large",
+    "customer": {
+        "name": "John Doe",
+        "address": "123 Main St",
+        "phone": "555-0123"
+    }
+}
 ```
 
-This allows you to immediately run a `GET` or `DELETE` request with the correct _Order ID_. To retrieve and delete the order, run the corresponding requests.
+Run the `GET` and `DELETE` requests situated below to get and delete the order as well.
 
 #### Use _cURL_
 
@@ -199,17 +184,17 @@ Run the command below to create a new order.
 
 ```bash
 curl -H 'Content-Type: application/json' \
-    -d '{ "customer": { "name": "fernando", "email": "fernando@email.com" }, "items": [ { "type":"vegetarian", "amount": 2 } ] }' \
+    -d '{ "orderId": "123", "pizzaType": "pepperoni", "size": "large", "customer": { "name": "John Doe", "address": "123 Main St", "phone": "555-0123" } }' \
     -X POST \
-    http://localhost:8001/orders
+    http://localhost:8001/order
 ```
 
-Copy the order-id generated and run the following command to get the newly created order:
+Get:
 
 ```bash
 curl -H 'Content-Type: application/json' \
     -X GET \
-    http://localhost:8001/orders/<order-id>
+    http://localhost:8001/order/123
 ```
 
 Finally, delete the order:
@@ -217,7 +202,7 @@ Finally, delete the order:
 ```bash
 curl -H 'Content-Type: application/json' \
     -X DELETE \
-    http://localhost:8001/orders/<order-id>
+    http://localhost:8001/order/123
 ```
 
 ### Visualize the data
@@ -228,4 +213,4 @@ If you downloaded Redis Insight, you can visualize the new order there:
 
 ## Next steps
 
-Create a new service to cook the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2:: [Service Invocation](/docs/challenge-2/python.md)!
+Create a new service to create the order, cook, and deliver the pizza. In the next challenge, you will learn how to create a new API endpoint and how to invoke it using Dapr. When you are ready, go to Challenge 2: [Service Invocation](/docs/challenge-2/dotnet.md)!
