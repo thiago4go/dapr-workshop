@@ -10,7 +10,7 @@ In this challenge, you will:
 - Update the `pizza-manager` application to use the Dapr State Management API.
 - Run the app locally using the Dapr CLI.
 
-<img src="../../imgs/challenge-1.png" width=20%>
+<img src="../../imgs/challenge-1.png" width=50%>
 
 To learn more about the Dapr State Management Building Block, refer to the [Dapr docs](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/).
 
