@@ -7,7 +7,7 @@ On the fouth and final challenge, you will orchestrate the process of ordering, 
 You will:
 
 - Replace the current chained service invocation calls that you created in the `pizza-storefront` service with a Workflow process.
-- Add an external event to validate the quality of the pizza after the cooking proces is done.
+- Add an external event to validate the quality of the pizza after the cooking process is done.
 - Query for the workflow status, pause, resume, and cancel the run.
 
 <img src="../../imgs/workflow.png" width=75%>
